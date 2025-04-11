@@ -5,12 +5,14 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
+  const [showDummyData, setShowDummyData] = useState(true);
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/data")
+    fetch("http://localhost:8000/api/sales-reps")
       .then((res) => res.json())
       .then((data) => {
-        setUsers(data.users || []);
+        console.log("Fetched data:", data); // Debug log
+        setUsers(data.salesReps || []);
         setLoading(false);
       })
       .catch((err) => {
@@ -35,22 +37,50 @@ export default function Home() {
 
   return (
     <div style={{ padding: "2rem" }}>
-      <h1>Next.js + FastAPI Sample</h1>
+      {/* Main Content */}
+      <div>
+        {/* Title Bar */}
+        <div>
+          <h1>Next.js + FastAPI Sample</h1>
+        </div>
 
-      <section style={{ marginBottom: "2rem" }}>
-        <h2>Dummy Data</h2>
-        {loading ? (
-          <p>Loading...</p>
-        ) : (
-          <ul>
-            {users.map((user) => (
-              <li key={user.id}>
-                {user.name} - {user.role}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+        {/* Dummy Data Section */}
+        <section>
+          <h2>Dummy Data </h2>
+          {showDummyData && (
+            <>
+              {loading ? (
+                <p>Loading...</p>
+              ) : (
+                <ul>
+                  {users.map((rep) => (
+                    <li key={rep.id}>
+                      
+                      {/* Person's Details */}
+                      <div>
+                        <strong>{rep.name}</strong> - {rep.role} ({rep.region})
+                        <ul>
+                          <li>Skills: {rep.skills.join(", ")}</li>
+                          <li>
+                            Deals:
+                            <ul>
+                              {rep.deals.map((deal, index) => (
+                                <li key={index}>
+                                  {deal.client} - ${deal.value} ({deal.status})
+                                </li>
+                              ))}
+                            </ul>
+                          </li>
+                        </ul>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          )}
+        </section>
+      </div>
 
       <section>
         <h2>Ask a Question (AI Endpoint)</h2>

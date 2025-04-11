@@ -4,16 +4,25 @@ import uvicorn
 import json
 
 app = FastAPI()
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Load dummy data
 with open("dummyData.json", "r") as f:
     DUMMY_DATA = json.load(f)
 
-@app.get("/api/data")
-def get_data():
+@app.get("/api/sales-reps")
+def get_sales_reps():
     """
-    Returns dummy data (e.g., list of users).
+    Returns a list of sales representatives from the dummy data.
     """
+    # Serve the salesReps data directly from dummyData.json
     return DUMMY_DATA
 
 @app.post("/api/ai")
