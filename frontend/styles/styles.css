@@ -6,7 +6,6 @@ body {
 }
 
 /* Container */
-
 .container {
   position: relative; /* Ensure proper stacking context */
   min-height: 100vh; /* Make the container stretch to the full height of the viewport */
@@ -75,6 +74,7 @@ body {
   list-style: none; /* Remove default bullet points */
   padding: 0; /* Remove default padding */
   margin: 0; /* Remove default margin */
+  background-color: transparent; /* Ensure the parent container is transparent */
 }
 
 .dummy-data li {
@@ -131,11 +131,13 @@ body {
 
 /* Style for the representative card */
 .rep-card {
-  padding: 1rem 2rem; /* Reduce padding inside the card */
-  margin: 5rem 7rem; /* Reduce left and right margins */
-  background-color: #2d3748; /* Background color for the card */
+  padding: 0.5rem 1rem; /* Adjust padding */
+  margin: 3rem 6rem; /* Adjust margins */
+  background-color: rgba(45, 55, 72, 0.2) !important; /* Force transparency */
   border-radius: 8px; /* Rounded corners */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Add shadow */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Lighter shadow */
+  position: relative; /* Ensure proper stacking context */
+  z-index: 1; /* Place the card above the particle background */
 }
 
 /* Style for the representative header (name and role) */
@@ -170,9 +172,14 @@ body {
   padding: 0.25rem; /* Reduce padding inside the details section */
 }
 
-/* Reduce spacing between list items */
+.rep-details ul {
+  background-color: transparent; /* Ensure the background is transparent */
+  box-shadow: none; /* Remove any shadow from the list */
+}
+
 .rep-details ul li {
-  margin-bottom: 0.2rem; /* Reduce spacing between list items */
+  margin-bottom: 0.25rem; /* Reduce spacing between list items */
+  background-color: transparent; /* Ensure list items are transparent */
 }
 
 /* Image section (30% width) */
@@ -184,15 +191,6 @@ body {
   overflow: hidden; /* Ensure the image doesn't overflow the container */
 }
 
-/* Details section (70% width) */
-.rep-details {
-  flex: 1; /* Take up the remaining 70% width */
-}
-
-.rep-details ul li {
-  margin-bottom: 0.25rem; /* Reduce spacing between list items */
-}
-
 /* Style for sales representative images */
 .sales-image {
   max-width: 75%; /* Reduce the maximum width */
@@ -202,4 +200,12 @@ body {
   border: 4px solid; /* Add a border */
   border-image-source: linear-gradient(90deg, #4a90e2, #50c878); /* Gradient border */
   border-image-slice: 1; /* Ensure the gradient covers the entire border */
+}
+
+/* Particle background */
+#tsparticles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1; /* Ensure the particle background is behind all content */
 }
