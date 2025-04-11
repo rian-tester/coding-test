@@ -65,22 +65,45 @@ export default function Home() {
               ) : (
                 <ul>
                   {users.map((rep) => (
-                    <li key={rep.id}>
-                      <div>
-                        <strong>{rep.name}</strong> - {rep.role} ({rep.region})
-                        <ul>
-                          <li>Skills: {rep.skills.join(", ")}</li>
-                          <li>
-                            Deals:
-                            <ul>
-                              {rep.deals.map((deal, index) => (
-                                <li key={index}>
-                                  {deal.client} - ${deal.value} ({deal.status})
-                                </li>
-                              ))}
-                            </ul>
-                          </li>
-                        </ul>
+                    <li key={rep.id} className="rep-card">
+                      {/* Name and Role */}
+                      <div className="rep-header">
+                        <strong>{rep.name}</strong> - {rep.role}
+                      </div>
+                      <hr className="divider" />
+                      {/* Horizontal Layout */}
+                      <div className="rep-content">
+                        {/* Image Section */}
+                        <div className="rep-image">
+                          <img
+                            src={`http://localhost:8000/images/${rep.name}.webp`}
+                            alt={rep.name}
+                            className="sales-image"
+                          />
+                        </div>
+                        {/* Details Section */}
+                        <div className="rep-details">
+                          <ul>
+                            <li>
+                              Skills:
+                              <ul>
+                                {rep.skills.map((skill, index) => (
+                                  <li key={index}>- {skill}</li>
+                                ))}
+                              </ul>
+                            </li>
+                            <li>
+                              Deals:
+                              <ul>
+                                {rep.deals.map((deal, index) => (
+                                  <li key={index}>
+                                    {deal.client} - ${deal.value} ({deal.status})
+                                  </li>
+                                ))}
+                              </ul>
+                            </li>
+                          </ul>
+                        </div>
                       </div>
                     </li>
                   ))}
