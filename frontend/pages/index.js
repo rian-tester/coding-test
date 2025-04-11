@@ -7,8 +7,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
-  const [showDummyData, setShowDummyData] = useState(true);
-  const [showAISection, setShowAISection] = useState(true);
+  const [showDummyData, setShowDummyData] = useState(false);
+  const [showAISection, setShowAISection] = useState(false);
 
   useEffect(() => {
     fetch("http://localhost:8000/api/sales-reps")
@@ -91,12 +91,7 @@ export default function Home() {
                         <div className="rep-details">
                           <ul>
                             <li>
-                              Skills:
-                              <ul>
-                                {rep.skills.map((skill, index) => (
-                                  <li key={index}>- {skill}</li>
-                                ))}
-                              </ul>
+                              Skills: {rep.skills.join(", ")}
                             </li>
                             <li>
                               Deals:

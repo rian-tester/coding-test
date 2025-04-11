@@ -29,6 +29,7 @@ body {
   text-align: center;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  margin-bottom: 2rem; /* Add spacing below the title bar */
 }
 
 .title-bar h1 {
@@ -43,7 +44,7 @@ body {
   cursor: pointer;
   font-size: 1.5rem;
   font-weight: 600;
-  margin-bottom: 1rem;
+  margin-bottom: 1rem; /* Add spacing below the H2 title */
 }
 
 .section-header.blue {
@@ -52,6 +53,17 @@ body {
 
 .section-header.green {
   color: #50c878;
+}
+
+/* Gradient border below H2 titles */
+.section-header::after {
+  content: ""; /* Empty content for the pseudo-element */
+  display: block;
+  width: 100%; /* Full width */
+  height: 4px; /* Same thickness as the image border */
+  margin-top: 0.5rem; /* Add spacing between the title and the border */
+  background: linear-gradient(90deg, #4a90e2, #50c878); /* Gradient color */
+  border-radius: 2px; /* Slightly rounded corners */
 }
 
 /* Dummy Data Section */
@@ -67,7 +79,7 @@ body {
 
 .dummy-data li {
   padding: 1rem; /* Add padding inside each list item */
-  margin-bottom: 1rem; /* Add spacing between list items */
+  margin-bottom: 0.5rem; /* Add spacing between list items */
   background-color: #2d3748; /* Background color for list items */
   border-radius: 8px; /* Rounded corners */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Add shadow */
@@ -119,18 +131,18 @@ body {
 
 /* Style for the representative card */
 .rep-card {
-  padding: 1rem;
-  margin-bottom: 1rem;
-  background-color: #2d374880; /* Background color for the card */
+  padding: 1rem 2rem; /* Reduce padding inside the card */
+  margin: 5rem 7rem; /* Reduce left and right margins */
+  background-color: #2d3748; /* Background color for the card */
   border-radius: 8px; /* Rounded corners */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Add shadow */
 }
 
 /* Style for the representative header (name and role) */
 .rep-header {
-  font-size: 1.2rem; /* Slightly larger font size */
+  font-size: 1rem; /* Slightly smaller font size */
   font-weight: 600; /* Bold text */
-  margin-bottom: 0.5rem; /* Add spacing below the header */
+  margin-bottom: 0.25rem; /* Reduce spacing below the header */
   text-align: center; /* Center-align the text */
 }
 
@@ -144,8 +156,23 @@ body {
 /* Horizontal layout for the content */
 .rep-content {
   display: flex; /* Use Flexbox for horizontal layout */
-  align-items: flex-start; /* Align items to the top */
-  gap: 1rem; /* Add spacing between the image and details */
+  align-items: center; /* Center items vertically */
+  gap: 0.5rem; /* Reduce spacing between the image and details */
+  min-height: 75px; /* Ensure the height matches the image */
+}
+
+/* Details section (70% width) */
+.rep-details {
+  flex: 1; /* Take up the remaining 70% width */
+  display: flex;
+  flex-direction: column; /* Stack content vertically */
+  justify-content: center; /* Center content vertically */
+  padding: 0.25rem; /* Reduce padding inside the details section */
+}
+
+/* Reduce spacing between list items */
+.rep-details ul li {
+  margin-bottom: 0.2rem; /* Reduce spacing between list items */
 }
 
 /* Image section (30% width) */
@@ -162,10 +189,14 @@ body {
   flex: 1; /* Take up the remaining 70% width */
 }
 
+.rep-details ul li {
+  margin-bottom: 0.25rem; /* Reduce spacing between list items */
+}
+
 /* Style for sales representative images */
 .sales-image {
-  max-width: 100%; /* Ensure the image fits within the container */
-  max-height: 100%; /* Ensure the image doesn't exceed the container's height */
+  max-width: 75%; /* Reduce the maximum width */
+  max-height: 75%; /* Reduce the maximum height */
   object-fit: contain; /* Maintain the aspect ratio and fit within the container */
   border-radius: 50%; /* Make the image circular */
   border: 4px solid; /* Add a border */
