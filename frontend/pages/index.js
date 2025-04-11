@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
+import Background from "../components/_background";
 
 export default function Home() {
   const [users, setUsers] = useState([]);
@@ -44,6 +45,11 @@ export default function Home() {
           rel="stylesheet"
         />
       </Head>
+
+
+      {/* Background Visualization */}
+      <Background />
+
       <div className="container">
         {/* Title Bar */}
         <div className="title-bar">

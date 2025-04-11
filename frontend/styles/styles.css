@@ -8,14 +8,15 @@ body {
 /* Container */
 
 .container {
-  position: relative; /* Ensure proper positioning */
+  position: relative; /* Ensure proper stacking context */
   min-height: 100vh; /* Make the container stretch to the full height of the viewport */
   width: 100%; /* Make the container stretch to the full width of the screen */
   padding: 2rem; /* Add padding inside the container */
-  background-color: rgba(0, 0, 0, 0.5); /* Background color */
+  background-color: rgba(0, 0, 0, 0.1); /* Background color */
   border-radius: 8px; /* Rounded corners */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Add shadow */
   box-sizing: border-box; /* Include padding in width/height calculations */
+  z-index: 1; /* Place the container above the particle background */
 }
 
 /* Title Bar */
@@ -120,7 +121,7 @@ body {
 .rep-card {
   padding: 1rem;
   margin-bottom: 1rem;
-  background-color: #2d3748; /* Background color for the card */
+  background-color: #2d374880; /* Background color for the card */
   border-radius: 8px; /* Rounded corners */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Add shadow */
 }
