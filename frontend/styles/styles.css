@@ -59,15 +59,32 @@ body {
 }
 
 .dummy-data ul {
-  list-style: none;
-  padding: 0;
+  list-style: none; /* Remove default bullet points */
+  padding: 0; /* Remove default padding */
+  margin: 0; /* Remove default margin */
 }
 
 .dummy-data li {
-  padding: 1rem;
-  background-color: #2d3748;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  padding: 1rem; /* Add padding inside each list item */
+  margin-bottom: 1rem; /* Add spacing between list items */
+  background-color: #2d3748; /* Background color for list items */
+  border-radius: 8px; /* Rounded corners */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Add shadow */
+}
+
+/* Add spacing between nested lists */
+.dummy-data li ul {
+  margin-top: 0.5rem; /* Add spacing above nested lists */
+  padding-left: 1rem; /* Indent nested lists */
+}
+
+.dummy-data li ul li {
+  margin-bottom: 0.5rem; /* Add spacing between nested list items */
+}
+
+/* Add spacing inside divs */
+.dummy-data li div {
+  padding: 0.5rem 0; /* Add vertical padding inside divs */
 }
 
 /* AI Section */
