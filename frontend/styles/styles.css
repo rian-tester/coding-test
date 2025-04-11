@@ -36,6 +36,7 @@ body {
   font-weight: 700;
   margin: 0;
   color: white;
+  animation: fadeIn 3s ease-in, bounce 4s ease-in-out; /* Add bounce animation */
 }
 
 /* Section Headers */
@@ -208,4 +209,28 @@ body {
   top: 0;
   left: 0;
   z-index: -1; /* Ensure the particle background is behind all content */
+}
+
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
 }
