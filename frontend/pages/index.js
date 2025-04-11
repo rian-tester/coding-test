@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import Head from "next/head";
 
 export default function Home() {
   const [users, setUsers] = useState([]);
@@ -6,12 +7,12 @@ export default function Home() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [showDummyData, setShowDummyData] = useState(true);
+  const [showAISection, setShowAISection] = useState(true);
 
   useEffect(() => {
     fetch("http://localhost:8000/api/sales-reps")
       .then((res) => res.json())
       .then((data) => {
-        console.log("Fetched data:", data); // Debug log
         setUsers(data.salesReps || []);
         setLoading(false);
       })
@@ -36,34 +37,45 @@ export default function Home() {
   };
 
   return (
-    <div style={{ padding: "2rem" }}>
-      {/* Main Content */}
-      <div>
+    <>
+      <Head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </Head>
+      <div className="p-8 bg-gray-800 text-white rounded-lg shadow-lg">
         {/* Title Bar */}
-        <div>
-          <h1>Next.js + FastAPI Sample</h1>
+        <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-500 to-green-500 p-4 rounded-lg shadow-md text-center">
+          <h1 className="text-3xl font-bold">Next.js + FastAPI Sample</h1>
         </div>
 
         {/* Dummy Data Section */}
-        <section>
-          <h2>Dummy Data </h2>
+        <section className="mt-8">
+          <h2
+            onClick={() => setShowDummyData(!showDummyData)}
+            className="cursor-pointer text-xl font-semibold text-blue-400 mb-4"
+          >
+            Dummy Data {showDummyData ? "▼" : "▶"}
+          </h2>
           {showDummyData && (
             <>
               {loading ? (
                 <p>Loading...</p>
               ) : (
-                <ul>
+                <ul className="space-y-4">
                   {users.map((rep) => (
-                    <li key={rep.id}>
-                      
-                      {/* Person's Details */}
+                    <li
+                      key={rep.id}
+                      className="p-4 bg-gray-700 rounded-lg shadow-md"
+                    >
                       <div>
                         <strong>{rep.name}</strong> - {rep.role} ({rep.region})
-                        <ul>
+                        <ul className="mt-2">
                           <li>Skills: {rep.skills.join(", ")}</li>
                           <li>
                             Deals:
-                            <ul>
+                            <ul className="ml-4 list-disc">
                               {rep.deals.map((deal, index) => (
                                 <li key={index}>
                                   {deal.client} - ${deal.value} ({deal.status})
@@ -80,25 +92,39 @@ export default function Home() {
             </>
           )}
         </section>
-      </div>
 
-      <section>
-        <h2>Ask a Question (AI Endpoint)</h2>
-        <div>
-          <input
-            type="text"
-            placeholder="Enter your question..."
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-          />
-          <button onClick={handleAskQuestion}>Ask</button>
-        </div>
-        {answer && (
-          <div style={{ marginTop: "1rem" }}>
-            <strong>AI Response:</strong> {answer}
-          </div>
-        )}
-      </section>
-    </div>
+        {/* AI Section */}
+        <section className="mt-8">
+          <h2
+            onClick={() => setShowAISection(!showAISection)}
+            className="cursor-pointer text-xl font-semibold text-green-400 mb-4"
+          >
+            Ask a Question {showAISection ? "▼" : "▶"}
+          </h2>
+          {showAISection && (
+            <div className="p-4 bg-gray-700 rounded-lg shadow-md">
+              <input
+                type="text"
+                placeholder="Enter your question..."
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                className="p-2 rounded border border-gray-300 mr-2"
+              />
+              <button
+                onClick={handleAskQuestion}
+                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-green-500 text-white rounded shadow"
+              >
+                Ask
+              </button>
+              {answer && (
+                <div className="mt-4 p-4 bg-gray-600 rounded">
+                  <strong>AI Response:</strong> {answer}
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+      </div>
+    </>
   );
 }
