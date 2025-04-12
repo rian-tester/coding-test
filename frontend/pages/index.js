@@ -33,7 +33,8 @@ export default function Home() {
         body: JSON.stringify({ question }),
       });
       const data = await response.json();
-      setAnswer(data.answer);
+      setAnswer(data.answer); // Update the answer
+      setQuestion(""); // Clear the text box after submission
     } catch (error) {
       console.error("Error in AI request:", error);
     }
@@ -130,21 +131,39 @@ export default function Home() {
             {activeSection === "ai-section" && (
               <section className="ai-section">
                 <h2 className="section-header blue">Ask a Question</h2>
-                <div>
-                  <input
-                    type="text"
-                    placeholder="Enter your question..."
+                <div className="question-container">
+                  <textarea
+                    placeholder="Shift + Enter for new line"
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
-                    onKeyDown={handleKeyDown} // Add the keydown event listener
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault(); // Prevent default Enter behavior
+                        handleAskQuestion(); // Submit the question
+                      }
+                    }}
+                    className="question-textbox"
                   />
-                  <button onClick={handleAskQuestion}>Ask</button>
-                  {answer && (
-                    <div className="response">
-                      <strong>AI Response:</strong> {answer}
-                    </div>
-                  )}
                 </div>
+                <div className="button-container">
+                  <button
+                    onClick={() => {
+                      setAnswer(""); // Remove the displayed answer
+                      setQuestion(""); // Clear the text box
+                    }}
+                    className="clear-button"
+                  >
+                    Clear
+                  </button>
+                  <button onClick={handleAskQuestion} className="ask-button">
+                    Ask
+                  </button>
+                </div>
+                {answer && (
+                  <div className="response">
+                    <strong>AI Response:</strong> {answer}
+                  </div>
+                )}
               </section>
             )}
           </div>

@@ -3,6 +3,8 @@ body {
   font-family: 'Poppins', sans-serif;
   background-color: #1a202c; /* Dark background */
   color: #ffffff; /* White text */
+  margin: 0; /* Remove default margin */
+  overflow: hidden; /* Prevent body from scrolling */
 }
 
 /* Container */
@@ -24,7 +26,6 @@ body {
   background: linear-gradient(90deg, #4a90e2, #50c878);
   padding: 1rem;
   text-align: center;
-  border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   z-index: 10;
 }
@@ -131,6 +132,44 @@ body {
   border-radius: 8px;
 }
 
+/* AI Section Styles */
+.question-container {
+  display: flex;
+  flex-direction: column; /* Stack the text box and button vertically */
+  width: 100%; /* Ensure it fills the content div */
+}
+
+.question-textbox {
+  width: 100%; /* Fill the width of the content div */
+  height: 8rem; /* Set height to cover at least 5 lines of text */
+  padding: 0.5rem;
+  font-family: 'Poppins', sans-serif; /* Use Poppins font */
+  font-size: 1rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  resize: none; /* Disable resizing */
+  box-sizing: border-box; /* Include padding in width/height calculations */
+}
+
+.ask-button {
+  align-self: flex-end; /* Align the button to the right */
+  margin-top: 0.5rem; /* Add spacing between the text box and button */
+  padding: 0.5rem 1.5rem; /* Increase button width slightly */
+  background: linear-gradient(90deg, #4a90e2, #50c878);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  font-family: 'Poppins', sans-serif; /* Use Poppins font */
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+.ask-button:hover {
+  background: linear-gradient(90deg, #50c878, #4a90e2); /* Reverse gradient on hover */
+}
+
 /* Style for the representative card */
 .rep-card {
   padding: 0.5rem 1rem; /* Adjust padding */
@@ -214,19 +253,21 @@ body {
 
 /* Sidebar Styles */
 .sidebar {
-  position: relative;
+  position: relative; /* Ensure the sidebar has a stacking context */
   width: 200px;
   background-color: rgba(45, 55, 72, 0.9); /* Semi-transparent dark background */
   color: white;
   padding: 1rem;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-  z-index: 10;
+  z-index: 20; /* Ensure it appears above the main content */
   transition: width 0.3s ease; /* Smooth transition for docking */
+  flex-shrink: 0; /* Prevent sidebar from shrinking */
+  overflow: visible; /* Allow child elements to overflow */
 }
 
 .sidebar.docked {
-  width: 3px; /* Narrow width when docked */
-  padding: 0; /* Remove padding to make it minimal */
+  width: 5px; /* Narrow width when docked */
+  padding: 0.5rem; /* Reduce padding to make it minimal */
 }
 
 .sidebar ul {
@@ -261,9 +302,9 @@ body {
 
 /* Toggle Button */
 .toggle-button {
-  position: absolute;
+  position: absolute; /* Ensure the button is positioned relative to the sidebar */
   top: 50%;
-  right: -15px;
+  right: -15px; /* Position the button outside the sidebar */
   transform: translateY(-50%);
   width: 30px;
   height: 30px;
@@ -277,15 +318,16 @@ body {
   align-items: center;
   justify-content: center;
   font-size: 1rem;
+  z-index: 100; /* Ensure the button appears above other elements */
   transition: transform 0.3s ease;
 }
 
 .sidebar.docked .toggle-button {
-  right: -15px; /* Ensure the button remains fully visible */
+  right: -15px; /* Ensure the button remains fully visible when docked */
 }
 
 .toggle-button:hover {
-  transform: translateY(-50%) scale(1.1);
+  transform: translateY(-50%) scale(1.1); /* Add hover effect */
 }
 
 @keyframes fadeIn {
@@ -316,23 +358,62 @@ body {
   display: flex;
   flex-direction: column; /* Stack title bar on top */
   height: 100vh; /* Full viewport height */
+  overflow: hidden; /* Prevent body from scrolling */
 }
 
 /* Content Wrapper */
 .content-wrapper {
   display: flex;
-  flex: 1; /* Take up remaining space below the title */
-  overflow: hidden; /* Prevent overflow */
+  flex: 1 1; /* Take up remaining space below the title */
+  overflow: hidden; /* Prevent horizontal scrolling */
 }
 
 /* Main Content Styles */
 .main-content {
-  flex: 1; /* Take up remaining horizontal space */
+  flex: 1 1; /* Take up remaining horizontal space */
   padding: 2rem;
-  overflow-y: auto; /* Allow scrolling if content overflows */
+  overflow-y: auto; /* Allow vertical scrolling for main content */
+  overflow-x: hidden; /* Prevent horizontal scrolling */
   transition: margin-left 0.3s ease; /* Smooth transition for content expansion */
+  box-sizing: border-box; /* Include padding in width calculations */
+  z-index: 10; /* Ensure it stays behind the sidebar */
+  height: calc(100vh - 4rem); /* Adjust height to fit within the viewport */
 }
 
-.main-content.expanded {
-  margin-left: 50px; /* Adjust margin when sidebar is docked */
+/* Button Container */
+.button-container {
+  display: flex;
+  justify-content: flex-end; /* Align buttons to the right */
+  align-items: center; /* Ensure buttons are vertically aligned */
+  gap: 0.5rem; /* Add spacing between the buttons */
+  margin-top: 0.5rem; /* Add spacing above the buttons */
+  width: 100%; /* Ensure the container spans the full width */
+  box-sizing: border-box; /* Include padding and border in width calculations */
+}
+
+/* Shared Button Styles */
+.clear-button,
+.ask-button {
+  padding: 0.5rem 1.5rem; /* Ensure both buttons have the same size */
+  background: linear-gradient(90deg, #4a90e2, #50c878);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  font-family: 'Poppins', sans-serif; /* Use Poppins font */
+  font-size: 1rem;
+  height: 2.5rem; /* Set a fixed height for both buttons */
+  margin-top: 0.5rem; /* Add consistent top margin for both buttons */
+  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center; /* Center text vertically */
+  justify-content: center; /* Center text horizontally */
+  min-width: 120px; /* Ensure both buttons have the same minimum width */
+  box-sizing: border-box; /* Include padding and border in height/width calculations */
+}
+
+.clear-button:hover,
+.ask-button:hover {
+  background: linear-gradient(90deg, #50c878, #4a90e2); /* Reverse gradient on hover */
 }
