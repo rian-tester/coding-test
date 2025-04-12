@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Head from "next/head";
 import Background from "../components/_background";
 import Sidebar from "../components/Sidebar";
+import ReactMarkdown from "react-markdown";
 
 export default function Home() {
   const [users, setUsers] = useState([]);
@@ -72,15 +73,9 @@ export default function Home() {
 
   return (
     <>
-      <Head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </Head>
-
+      <Head/>
       {/* Background Visualization */}
-      <Background />
+      <Background/>
 
       <div className="layout">
         {/* Title Bar */}
@@ -147,34 +142,42 @@ export default function Home() {
             {activeSection === "ai-section" && (
               <section className="ai-section">
                 <h2 className="section-header blue">Ask a Question</h2>
-                <div className="question-container">
-                  <textarea
-                    placeholder="Shift + Enter for new line"
-                    value={question}
-                    onChange={(e) => setQuestion(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    className="question-textbox"
-                  />
-                </div>
-                <div className="button-container">
-                  <button onClick={handleClearChat} className="clear-button">
-                    Clear
-                  </button>
-                  <button onClick={handleAskQuestion} className="ask-button">
-                    Ask
-                  </button>
-                </div>
-                <div className="response-history">
-                  {answerHistory.map((item, index) => (
-                    <div key={index} className="response-item">
-                      <div className="bubble user-bubble">
-                        <strong>Question:</strong> {item.question}
-                      </div>
-                      <div className="bubble ai-bubble">
-                        <strong>AI Response:</strong> {item.answer}
-                      </div>
+                <div className="chat-container">
+                  <div className="input-container">
+                    <textarea
+                      placeholder="Shift + Enter for new line"
+                      value={question}
+                      onChange={(e) => setQuestion(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      className="question-textbox"
+                    />
+                    <div className="button-container">
+                      <button onClick={handleClearChat} className="clear-button">
+                        Clear
+                      </button>
+                      <button onClick={handleAskQuestion} className="ask-button">
+                        Ask
+                      </button>
                     </div>
-                  ))}
+                  </div>
+
+                  
+                  {/* Chat history */}
+                  <div className="response-history">
+                    {answerHistory.map((item, index) => (
+                      <div key={index} className="response-item">
+                        <div className="bubble user-bubble">
+                          <strong>Question:</strong> {item.question}
+                        </div>
+                        <div className="bubble ai-bubble">
+                          <strong>AI Response:</strong>
+                          <ReactMarkdown>{item.answer}</ReactMarkdown>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  
                 </div>
               </section>
             )}
