@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
 import Background from "../components/_background";
+import Sidebar from "../components/Sidebar";
 
 export default function Home() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
-  const [showDummyData, setShowDummyData] = useState(false);
-  const [showAISection, setShowAISection] = useState(false);
+  const [activeSection, setActiveSection] = useState("dummy-data"); // Default section
 
   useEffect(() => {
     fetch("http://localhost:8000/api/sales-reps")
@@ -37,6 +37,10 @@ export default function Home() {
     }
   };
 
+  const handleNavigate = (section) => {
+    setActiveSection(section); // Update the active section
+  };
+
   return (
     <>
       <Head>
@@ -46,99 +50,88 @@ export default function Home() {
         />
       </Head>
 
-
       {/* Background Visualization */}
       <Background />
 
-      <div className="container">
+      <div className="layout">
         {/* Title Bar */}
         <div className="title-bar">
           <h1>Next.js + FastAPI Sample</h1>
         </div>
 
-        {/* Dummy Data Section */}
-        <section className="dummy-data">
-          <h2
-            onClick={() => setShowDummyData(!showDummyData)}
-            className={`section-header blue`}
-          >
-            Dummy Data {showDummyData ? "▼" : "▶"}
-          </h2>
-          {showDummyData && (
-            <>
-              {loading ? (
-                <p>Loading...</p>
-              ) : (
-                <ul>
-                  {users.map((rep) => (
-                    <li key={rep.id} className="rep-card">
-                      {/* Name and Role */}
-                      <div className="rep-header">
-                        <strong>{rep.name}</strong> - {rep.role}
-                      </div>
-                      <hr className="divider" />
-                      {/* Horizontal Layout */}
-                      <div className="rep-content">
-                        {/* Image Section */}
-                        <div className="rep-image">
-                          <img
-                            src={`http://localhost:8000/images/${rep.name}.webp`}
-                            alt={rep.name}
-                            className="sales-image"
-                          />
-                        </div>
-                        {/* Details Section */}
-                        <div className="rep-details">
-                          <ul>
-                            <li>
-                              Skills: {rep.skills.join(", ")}
-                            </li>
-                            <li>
-                              Deals:
-                              <ul>
-                                {rep.deals.map((deal, index) => (
-                                  <li key={index}>
-                                    {deal.client} - ${deal.value} ({deal.status})
-                                  </li>
-                                ))}
-                              </ul>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </>
-          )}
-        </section>
+        {/* Sidebar and Main Content */}
+        <div className="content-wrapper">
+          {/* Sidebar */}
+          <Sidebar onNavigate={handleNavigate} />
 
-        {/* AI Section */}
-        <section className="ai-section">
-          <h2
-            onClick={() => setShowAISection(!showAISection)}
-            className={`section-header green`}
-          >
-            Ask a Question {showAISection ? "▼" : "▶"}
-          </h2>
-          {showAISection && (
-            <div>
-              <input
-                type="text"
-                placeholder="Enter your question..."
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-              />
-              <button onClick={handleAskQuestion}>Ask</button>
-              {answer && (
-                <div className="response">
-                  <strong>AI Response:</strong> {answer}
+          {/* Main Content */}
+          <div className="main-content">
+            {/* Content Based on Active Section */}
+            {activeSection === "dummy-data" && (
+              <section className="dummy-data">
+                <h2 className="section-header blue">Dummy Data</h2>
+                {loading ? (
+                  <p>Loading...</p>
+                ) : (
+                  <ul>
+                    {users.map((rep) => (
+                      <li key={rep.id} className="rep-card">
+                        <div className="rep-header">
+                          <strong>{rep.name}</strong> - {rep.role}
+                        </div>
+                        <hr className="divider" />
+                        <div className="rep-content">
+                          <div className="rep-image">
+                            <img
+                              src={`http://localhost:8000/images/${rep.name}.webp`}
+                              alt={rep.name}
+                              className="sales-image"
+                            />
+                          </div>
+                          <div className="rep-details">
+                            <ul>
+                              <li>Skills: {rep.skills.join(", ")}</li>
+                              <li>
+                                Deals:
+                                <ul>
+                                  {rep.deals.map((deal, index) => (
+                                    <li key={index}>
+                                      {deal.client} - ${deal.value} ({deal.status})
+                                    </li>
+                                  ))}
+                                </ul>
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            )}
+
+            {activeSection === "ai-section" && (
+              <section className="ai-section">
+                <h2 className="section-header green">Ask a Question</h2>
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Enter your question..."
+                    value={question}
+                    onChange={(e) => setQuestion(e.target.value)}
+                  />
+                  <button onClick={handleAskQuestion}>Ask</button>
+                  {answer && (
+                    <div className="response">
+                      <strong>AI Response:</strong> {answer}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          )}
-        </section>
+              </section>
+            )}
+          </div>
+        </div>
       </div>
     </>
   );

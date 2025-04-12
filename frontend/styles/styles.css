@@ -20,15 +20,13 @@ body {
 
 /* Title Bar */
 .title-bar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  width: 100%; /* Full width */
   background: linear-gradient(90deg, #4a90e2, #50c878);
   padding: 1rem;
   text-align: center;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  margin-bottom: 2rem; /* Add spacing below the title bar */
+  z-index: 10;
 }
 
 .title-bar h1 {
@@ -47,12 +45,9 @@ body {
   margin-bottom: 1rem; /* Add spacing below the H2 title */
 }
 
-.section-header.blue {
-  color: #4a90e2;
-}
-
+.section-header.blue,
 .section-header.green {
-  color: #50c878;
+  color: #4a90e2; /* Use blue for both */
 }
 
 /* Gradient border below H2 titles */
@@ -211,6 +206,35 @@ body {
   z-index: -1; /* Ensure the particle background is behind all content */
 }
 
+/* Sidebar Styles */
+.sidebar {
+  width: 200px;
+  background-color: rgba(45, 55, 72, 0.9); /* Semi-transparent dark background */
+  color: white;
+  padding: 1rem;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar ul li {
+  margin: 1rem 0;
+  cursor: pointer;
+  font-size: 1.5rem; /* Match the subtitle size */
+  font-weight: 600; /* Match the subtitle weight */
+  color: #ffffff; /* Default color */
+  transition: color 0.3s ease, transform 0.3s ease; /* Smooth transition for color and size */
+}
+
+.sidebar ul li:hover {
+  color: #4a90e2; /* Change hover color to blue */
+  transform: scale(1.1); /* Slightly increase the size on hover */
+}
 
 @keyframes fadeIn {
   from {
@@ -233,4 +257,25 @@ body {
   60% {
     transform: translateY(-5px);
   }
+}
+
+/* Layout Styles */
+.layout {
+  display: flex;
+  flex-direction: column; /* Stack title bar on top */
+  height: 100vh; /* Full viewport height */
+}
+
+/* Content Wrapper */
+.content-wrapper {
+  display: flex;
+  flex: 1; /* Take up remaining space below the title */
+  overflow: hidden; /* Prevent overflow */
+}
+
+/* Main Content Styles */
+.main-content {
+  flex: 1; /* Take up remaining horizontal space */
+  padding: 2rem;
+  overflow-y: auto; /* Allow scrolling if content overflows */
 }
