@@ -25,6 +25,7 @@ export default function Home() {
   }, []);
 
   const handleAskQuestion = async () => {
+    if (question.trim() === "") return; // Prevent submitting empty or whitespace-only questions
     try {
       const response = await fetch("http://localhost:8000/api/ai", {
         method: "POST",
@@ -35,6 +36,12 @@ export default function Home() {
       setAnswer(data.answer);
     } catch (error) {
       console.error("Error in AI request:", error);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && question.trim() !== "") {
+      handleAskQuestion(); // Submit the question when Enter is pressed
     }
   };
 
@@ -129,6 +136,7 @@ export default function Home() {
                     placeholder="Enter your question..."
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
+                    onKeyDown={handleKeyDown} // Add the keydown event listener
                   />
                   <button onClick={handleAskQuestion}>Ask</button>
                   {answer && (

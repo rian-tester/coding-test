@@ -108,6 +108,12 @@ body {
   margin-right: 0.5rem;
 }
 
+.ai-section input::placeholder {
+  font-family: 'Poppins', sans-serif; /* Use Poppins font */
+  color: #a0aec0; /* Optional: Light gray color for the placeholder */
+  font-size: 1rem; /* Match the font size of the input text */
+}
+
 .ai-section button {
   padding: 0.5rem 1rem;
   background: linear-gradient(90deg, #4a90e2, #50c878);
