@@ -7,7 +7,7 @@ export default function Home() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState("");
+  const [answerHistory, setAnswerHistory] = useState([]); // Store history of questions and answers
   const [activeSection, setActiveSection] = useState("dummy-data"); // Default section
   const [isDocked, setIsDocked] = useState(false); // Sidebar docking state
 
@@ -34,8 +34,13 @@ export default function Home() {
       });
       const data = await response.json();
       console.log("AI Response:", data); // Debugging log
+
       if (data.answer) {
-        setAnswer(data.answer); // Update the answer
+        // Add the question and answer to the history
+        setAnswerHistory((prevHistory) => [
+          { question, answer: data.answer },
+          ...prevHistory, // Add newest chat at the top
+        ]);
       } else {
         console.error("No answer field in response:", data);
       }
@@ -46,9 +51,15 @@ export default function Home() {
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" && question.trim() !== "") {
+    if (e.key === "Enter" && !e.shiftKey && question.trim() !== "") {
+      e.preventDefault(); // Prevent default Enter behavior
       handleAskQuestion(); // Submit the question when Enter is pressed
     }
+  };
+
+  const handleClearChat = () => {
+    setAnswerHistory([]); // Clear the chat history
+    setQuestion(""); // Clear the input field
   };
 
   const handleNavigate = (section) => {
@@ -141,34 +152,30 @@ export default function Home() {
                     placeholder="Shift + Enter for new line"
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault(); // Prevent default Enter behavior
-                        handleAskQuestion(); // Submit the question
-                      }
-                    }}
+                    onKeyDown={handleKeyDown}
                     className="question-textbox"
                   />
                 </div>
                 <div className="button-container">
-                  <button
-                    onClick={() => {
-                      setAnswer(""); // Remove the displayed answer
-                      setQuestion(""); // Clear the text box
-                    }}
-                    className="clear-button"
-                  >
+                  <button onClick={handleClearChat} className="clear-button">
                     Clear
                   </button>
                   <button onClick={handleAskQuestion} className="ask-button">
                     Ask
                   </button>
                 </div>
-                {answer && (
-                  <div className="response">
-                    <strong>AI Response:</strong> {answer}
-                  </div>
-                )}
+                <div className="response-history">
+                  {answerHistory.map((item, index) => (
+                    <div key={index} className="response-item">
+                      <div className="bubble user-bubble">
+                        <strong>Question:</strong> {item.question}
+                      </div>
+                      <div className="bubble ai-bubble">
+                        <strong>AI Response:</strong> {item.answer}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </section>
             )}
           </div>
