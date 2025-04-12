@@ -39,6 +39,28 @@ openai_client = OpenAI(api_key=OPENAI_API_KEY)
 # Configure logging
 logging.basicConfig(level=logging.ERROR)
 
+# Load system instruction from a file
+def load_system_instruction():
+    with open("assistant.txt", "r") as f:
+        return f.read().strip()
+
+# Function to check if the question is related to dummy data
+def is_related_to_dummy_data(question):
+    keywords = [
+        "sales reps", "sales representatives", "dummy data", "sales team",
+        "salesperson", "sales rep", "sales executive", "sales manager"
+    ]
+    return any(keyword in question.lower() for keyword in keywords)
+
+# Function to generate a response from dummy data
+def generate_dummy_data_response():
+    sales_reps = DUMMY_DATA.get("salesReps", [])
+    if not sales_reps:
+        return "I couldn't find any sales representatives in the dummy data."
+    response = "Here are the sales representatives from the dummy data:\n"
+    response += "\n".join([f"- {rep}" for rep in sales_reps])
+    return response
+
 @app.get("/api/sales-reps")
 def get_sales_reps():
     """
@@ -57,17 +79,73 @@ async def ai_endpoint(request: Request):
         return {"error": "Question is required"}
 
     try:
-        # Call OpenAI ChatCompletion API
-        response = openai_client.chat.completions.create(
-            model="gpt-4o",  # Use GPT-4o model
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": question},
-            ],
-            max_tokens=2000,
-            temperature=0.7,
-        )
-        answer = response.choices[0].message.content.strip()
+        # Check if the question is related to dummy data
+        if is_related_to_dummy_data(question):
+            # Load the system instruction dynamically
+            system_instruction = load_system_instruction()
+
+            # Prepare the dummy data for OpenAI
+            sales_reps = DUMMY_DATA.get("salesReps", [])
+            if not sales_reps:
+                return {"answer": "I couldn't find any sales representatives in the dummy data."}
+
+            # Check if the question is about a specific sales rep
+            for rep in sales_reps:
+                if rep.get("name").lower() in question.lower():
+                    # Send dummy data to OpenAI for a clean, human-readable response
+                    gpt_prompt = (
+                        f"The user asked: {question}. Here is the sales representative data for {rep.get('name')}: {json.dumps(rep)}. "
+                        f"Please provide a clean, human-readable, and elaborated response."
+                    )
+                    gpt_response = openai_client.chat.completions.create(
+                        model="gpt-4o",  # Use GPT-4o model
+                        messages=[
+                            {"role": "system", "content": system_instruction},
+                            {"role": "user", "content": gpt_prompt},
+                        ],
+                        max_tokens=2000,
+                        temperature=0.7,
+                    )
+                    answer = gpt_response.choices[0].message.content.strip()
+
+                    # Log the GPT elaboration
+                    logging.info(f"GPT Response for {rep.get('name')}: {answer}")
+
+                    return {"answer": answer}
+
+            # If no specific sales rep is mentioned, send all dummy data to OpenAI
+            gpt_prompt = (
+                f"The user asked: {question}. Here is the sales representative data: {json.dumps(sales_reps)}. "
+                f"Please provide a clean, human-readable, and elaborated response."
+            )
+            gpt_response = openai_client.chat.completions.create(
+                model="gpt-4o",  # Use GPT-4o model
+                messages=[
+                    {"role": "system", "content": system_instruction},
+                    {"role": "user", "content": gpt_prompt},
+                ],
+                max_tokens=2000,
+                temperature=0.7,
+            )
+            answer = gpt_response.choices[0].message.content.strip()
+
+            return {"answer": answer}
+        else:
+            # Load the system instruction dynamically
+            system_instruction = load_system_instruction()
+
+            # Call OpenAI ChatCompletion API for general questions
+            gpt_response = openai_client.chat.completions.create(
+                model="gpt-4o",  # Use GPT-4o model
+                messages=[
+                    {"role": "system", "content": system_instruction},
+                    {"role": "user", "content": question},
+                ],
+                max_tokens=2000,
+                temperature=0.7,
+            )
+            answer = gpt_response.choices[0].message.content.strip()
+
         return {"answer": answer}
     except Exception as e:
         logging.error(f"Error processing AI request: {e}")
