@@ -3,8 +3,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 import json
+import os
+from dotenv import load_dotenv
+from openai import OpenAI
+import logging
 
+# Load environment variables
+load_dotenv()
+
+# Initialize FastAPI app
 app = FastAPI()
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -21,26 +30,48 @@ app.mount("/images", StaticFiles(directory="images"), name="images")
 with open("dummyData.json", "r") as f:
     DUMMY_DATA = json.load(f)
 
+# Load OpenAI API key
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+# Initialize OpenAI client
+openai_client = OpenAI(api_key=OPENAI_API_KEY)
+
+# Configure logging
+logging.basicConfig(level=logging.ERROR)
+
 @app.get("/api/sales-reps")
 def get_sales_reps():
     """
     Returns a list of sales representatives from the dummy data.
     """
-    # Serve the salesReps data directly from dummyData.json
     return DUMMY_DATA
 
 @app.post("/api/ai")
 async def ai_endpoint(request: Request):
     """
-    Accepts a user question and returns a placeholder AI response.
-    (Optionally integrate a real AI model or external service here.)
+    Handles AI question-answering requests.
     """
-    body = await request.json()
-    user_question = body.get("question", "")
-    
-    # Placeholder logic: echo the question or generate a simple response
-    # Replace with real AI logic as desired (e.g., call to an LLM).
-    return {"answer": f"This is a placeholder answer to your question: {user_question}"}
+    data = await request.json()
+    question = data.get("question", "")
+    if not question:
+        return {"error": "Question is required"}
+
+    try:
+        # Call OpenAI ChatCompletion API
+        response = openai_client.chat.completions.create(
+            model="gpt-4o",  # Use GPT-4o model
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": question},
+            ],
+            max_tokens=100,
+            temperature=0.7,
+        )
+        answer = response.choices[0].message.content.strip()
+        return {"answer": answer}
+    except Exception as e:
+        logging.error(f"Error processing AI request: {e}")
+        return {"answer": "Sorry, I couldn't process your request."}
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

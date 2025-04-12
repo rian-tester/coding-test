@@ -33,7 +33,12 @@ export default function Home() {
         body: JSON.stringify({ question }),
       });
       const data = await response.json();
-      setAnswer(data.answer); // Update the answer
+      console.log("AI Response:", data); // Debugging log
+      if (data.answer) {
+        setAnswer(data.answer); // Update the answer
+      } else {
+        console.error("No answer field in response:", data);
+      }
       setQuestion(""); // Clear the text box after submission
     } catch (error) {
       console.error("Error in AI request:", error);
