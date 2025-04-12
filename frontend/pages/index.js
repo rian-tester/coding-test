@@ -9,6 +9,7 @@ export default function Home() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [activeSection, setActiveSection] = useState("dummy-data"); // Default section
+  const [isDocked, setIsDocked] = useState(false); // Sidebar docking state
 
   useEffect(() => {
     fetch("http://localhost:8000/api/sales-reps")
@@ -41,6 +42,10 @@ export default function Home() {
     setActiveSection(section); // Update the active section
   };
 
+  const handleToggleDock = () => {
+    setIsDocked(!isDocked); // Toggle the docking state
+  };
+
   return (
     <>
       <Head>
@@ -62,10 +67,14 @@ export default function Home() {
         {/* Sidebar and Main Content */}
         <div className="content-wrapper">
           {/* Sidebar */}
-          <Sidebar onNavigate={handleNavigate} />
+          <Sidebar
+            isDocked={isDocked}
+            onToggleDock={handleToggleDock}
+            onNavigate={handleNavigate}
+          />
 
           {/* Main Content */}
-          <div className="main-content">
+          <div className={`main-content ${isDocked ? "expanded" : ""}`}>
             {/* Content Based on Active Section */}
             {activeSection === "dummy-data" && (
               <section className="dummy-data">
@@ -113,7 +122,7 @@ export default function Home() {
 
             {activeSection === "ai-section" && (
               <section className="ai-section">
-                <h2 className="section-header green">Ask a Question</h2>
+                <h2 className="section-header blue">Ask a Question</h2>
                 <div>
                   <input
                     type="text"
