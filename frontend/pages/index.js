@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import Head from "next/head";
 import Background from "../components/_background";
 import Sidebar from "../components/Sidebar";
+import ReactMarkdown from "react-markdown";
 
 export default function Home() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState("");
+  const [answerHistory, setAnswerHistory] = useState([]); // Store history of questions and answers
   const [activeSection, setActiveSection] = useState("dummy-data"); // Default section
   const [isDocked, setIsDocked] = useState(false); // Sidebar docking state
 
@@ -33,7 +34,17 @@ export default function Home() {
         body: JSON.stringify({ question }),
       });
       const data = await response.json();
-      setAnswer(data.answer); // Update the answer
+      console.log("AI Response:", data); // Debugging log
+
+      if (data.answer) {
+        // Add the question and answer to the history
+        setAnswerHistory((prevHistory) => [
+          { question, answer: data.answer },
+          ...prevHistory, // Add newest chat at the top
+        ]);
+      } else {
+        console.error("No answer field in response:", data);
+      }
       setQuestion(""); // Clear the text box after submission
     } catch (error) {
       console.error("Error in AI request:", error);
@@ -41,9 +52,15 @@ export default function Home() {
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" && question.trim() !== "") {
+    if (e.key === "Enter" && !e.shiftKey && question.trim() !== "") {
+      e.preventDefault(); // Prevent default Enter behavior
       handleAskQuestion(); // Submit the question when Enter is pressed
     }
+  };
+
+  const handleClearChat = () => {
+    setAnswerHistory([]); // Clear the chat history
+    setQuestion(""); // Clear the input field
   };
 
   const handleNavigate = (section) => {
@@ -56,15 +73,9 @@ export default function Home() {
 
   return (
     <>
-      <Head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </Head>
-
+      <Head/>
       {/* Background Visualization */}
-      <Background />
+      <Background/>
 
       <div className="layout">
         {/* Title Bar */}
@@ -131,39 +142,43 @@ export default function Home() {
             {activeSection === "ai-section" && (
               <section className="ai-section">
                 <h2 className="section-header blue">Ask a Question</h2>
-                <div className="question-container">
-                  <textarea
-                    placeholder="Shift + Enter for new line"
-                    value={question}
-                    onChange={(e) => setQuestion(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault(); // Prevent default Enter behavior
-                        handleAskQuestion(); // Submit the question
-                      }
-                    }}
-                    className="question-textbox"
-                  />
-                </div>
-                <div className="button-container">
-                  <button
-                    onClick={() => {
-                      setAnswer(""); // Remove the displayed answer
-                      setQuestion(""); // Clear the text box
-                    }}
-                    className="clear-button"
-                  >
-                    Clear
-                  </button>
-                  <button onClick={handleAskQuestion} className="ask-button">
-                    Ask
-                  </button>
-                </div>
-                {answer && (
-                  <div className="response">
-                    <strong>AI Response:</strong> {answer}
+                <div className="chat-container">
+                  <div className="input-container">
+                    <textarea
+                      placeholder="Shift + Enter for new line"
+                      value={question}
+                      onChange={(e) => setQuestion(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      className="question-textbox"
+                    />
+                    <div className="button-container">
+                      <button onClick={handleClearChat} className="clear-button">
+                        Clear
+                      </button>
+                      <button onClick={handleAskQuestion} className="ask-button">
+                        Ask
+                      </button>
+                    </div>
                   </div>
-                )}
+
+                  
+                  {/* Chat history */}
+                  <div className="response-history">
+                    {answerHistory.map((item, index) => (
+                      <div key={index} className="response-item">
+                        <div className="bubble user-bubble">
+                          <strong>Question:</strong> {item.question}
+                        </div>
+                        <div className="bubble ai-bubble">
+                          <strong>AI Response:</strong>
+                          <ReactMarkdown>{item.answer}</ReactMarkdown>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  
+                </div>
               </section>
             )}
           </div>
