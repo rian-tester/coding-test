@@ -64,7 +64,7 @@ async def ai_endpoint(request: Request):
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": question},
             ],
-            max_tokens=100,
+            max_tokens=2000,
             temperature=0.7,
         )
         answer = response.choices[0].message.content.strip()
