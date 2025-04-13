@@ -89,10 +89,27 @@ def generate_dummy_data_response():
 @app.get("/api/sales-reps", summary="Get Sales Representatives", tags=["Sales Reps"])
 def get_sales_reps():
     """
-    Returns a list of sales representatives from the dummy data.
+    Retrieve a list of sales representatives and their details.
 
     **Response:**
-    - `200 OK`: A JSON object containing sales representatives and their details.
+    - `200 OK`: A JSON object containing the sales representatives' data.
+
+    **Example Response:**
+    ```json
+    {
+        "salesReps": [
+            {
+                "name": "John Doe",
+                "role": "Regional Manager",
+                "region": "North America",
+                "clients": [
+                    {"name": "Client A", "status": "Active"},
+                    {"name": "Client B", "status": "Inactive"}
+                ]
+            }
+        ]
+    }
+    ```
     """
     return DUMMY_DATA
 
@@ -103,15 +120,44 @@ class AIRequest(BaseModel):
 @app.post("/api/ai", summary="AI Question Answering", tags=["AI"])
 async def ai_endpoint(request: AIRequest):
     """
-    Handles AI question-answering requests.
+    Handles AI-powered question-answering requests.
 
     **Request Body:**
     - `question` (str): The question to be answered.
 
-    **Response:**
+    **Responses:**
     - `200 OK`: A JSON object containing the AI-generated answer.
-    - `400 Bad Request`: If the `question` field is missing or invalid.
+    - `400 Bad Request`: If the `question` field is empty.
+    - `422 Unprocessable Entity`: If the request body is malformed or the `question` field is of an invalid type.
     - `500 Internal Server Error`: If an error occurs while processing the request.
+
+    **Example Request:**
+    ```json
+    {
+        "question": "Who are the sales reps?"
+    }
+    ```
+
+    **Example Response:**
+    ```json
+    {
+        "answer": "The sales representatives are John Doe and Jane Smith."
+    }
+    ```
+
+    **Error Response (400):**
+    ```json
+    {
+        "detail": "The 'question' field cannot be empty."
+    }
+    ```
+
+    **Error Response (500):**
+    ```json
+    {
+        "detail": "Failed to process the AI request. Please try again later."
+    }
+    ```
     """
     question = request.question.strip()
     if not question:
