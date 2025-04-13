@@ -1,10 +1,11 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 import json
 import os
 from dotenv import load_dotenv
+import openai
 from openai import OpenAI
 import logging
 from pydantic import BaseModel
@@ -47,12 +48,21 @@ with open("dummyData.json", "r") as f:
 
 # Load OpenAI API key
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    raise RuntimeError("OPENAI_API_KEY is not set in the environment variables.")
 
 # Initialize OpenAI client
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
 # Configure logging
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(
+    level=logging.ERROR,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler(),  # Logs to console
+        logging.FileHandler("error.log"),  # Logs to a file
+    ],
+)
 
 # Load system instruction from a file
 def load_system_instruction():
@@ -79,10 +89,27 @@ def generate_dummy_data_response():
 @app.get("/api/sales-reps", summary="Get Sales Representatives", tags=["Sales Reps"])
 def get_sales_reps():
     """
-    Returns a list of sales representatives from the dummy data.
+    Retrieve a list of sales representatives and their details.
 
     **Response:**
-    - `200 OK`: A JSON object containing sales representatives and their details.
+    - `200 OK`: A JSON object containing the sales representatives' data.
+
+    **Example Response:**
+    ```json
+    {
+        "salesReps": [
+            {
+                "name": "John Doe",
+                "role": "Regional Manager",
+                "region": "North America",
+                "clients": [
+                    {"name": "Client A", "status": "Active"},
+                    {"name": "Client B", "status": "Inactive"}
+                ]
+            }
+        ]
+    }
+    ```
     """
     return DUMMY_DATA
 
@@ -93,41 +120,66 @@ class AIRequest(BaseModel):
 @app.post("/api/ai", summary="AI Question Answering", tags=["AI"])
 async def ai_endpoint(request: AIRequest):
     """
-    Handles AI question-answering requests.
+    Handles AI-powered question-answering requests.
 
     **Request Body:**
     - `question` (str): The question to be answered.
 
-    **Response:**
+    **Responses:**
     - `200 OK`: A JSON object containing the AI-generated answer.
-    - `400 Bad Request`: If the `question` field is missing or invalid.
+    - `400 Bad Request`: If the `question` field is empty.
+    - `422 Unprocessable Entity`: If the request body is malformed or the `question` field is of an invalid type.
     - `500 Internal Server Error`: If an error occurs while processing the request.
+
+    **Example Request:**
+    ```json
+    {
+        "question": "Who are the sales reps?"
+    }
+    ```
+
+    **Example Response:**
+    ```json
+    {
+        "answer": "The sales representatives are John Doe and Jane Smith."
+    }
+    ```
+
+    **Error Response (400):**
+    ```json
+    {
+        "detail": "The 'question' field cannot be empty."
+    }
+    ```
+
+    **Error Response (500):**
+    ```json
+    {
+        "detail": "Failed to process the AI request. Please try again later."
+    }
+    ```
     """
-    question = request.question
+    question = request.question.strip()
     if not question:
-        return {"error": "Question is required"}
+        raise HTTPException(status_code=400, detail="The 'question' field cannot be empty.")
 
     try:
         # Check if the question is related to dummy data
         if is_related_to_dummy_data(question):
-            # Load the system instruction dynamically
             system_instruction = load_system_instruction()
-
-            # Prepare the dummy data for OpenAI
             sales_reps = DUMMY_DATA.get("salesReps", [])
             if not sales_reps:
                 return {"answer": "I couldn't find any sales representatives in the dummy data."}
 
-            # Check if the question is about a specific sales rep
+            # Check for specific sales rep
             for rep in sales_reps:
                 if rep.get("name").lower() in question.lower():
-                    # Send dummy data to OpenAI for a clean, human-readable response
                     gpt_prompt = (
                         f"The user asked: {question}. Here is the sales representative data for {rep.get('name')}: {json.dumps(rep)}. "
                         f"Please provide a clean, human-readable, and elaborated response."
                     )
                     gpt_response = openai_client.chat.completions.create(
-                        model="gpt-4o",  # Use GPT-4o model
+                        model="gpt-4o",
                         messages=[
                             {"role": "system", "content": system_instruction},
                             {"role": "user", "content": gpt_prompt},
@@ -135,20 +187,15 @@ async def ai_endpoint(request: AIRequest):
                         max_tokens=2000,
                         temperature=0.7,
                     )
-                    answer = gpt_response.choices[0].message.content.strip()
+                    return {"answer": gpt_response.choices[0].message.content.strip()}
 
-                    # Log the GPT elaboration
-                    logging.info(f"GPT Response for {rep.get('name')}: {answer}")
-
-                    return {"answer": answer}
-
-            # If no specific sales rep is mentioned, send all dummy data to OpenAI
+            # General response for all sales reps
             gpt_prompt = (
                 f"The user asked: {question}. Here is the sales representative data: {json.dumps(sales_reps)}. "
                 f"Please provide a clean, human-readable, and elaborated response."
             )
             gpt_response = openai_client.chat.completions.create(
-                model="gpt-4o",  # Use GPT-4o model
+                model="gpt-4o",
                 messages=[
                     {"role": "system", "content": system_instruction},
                     {"role": "user", "content": gpt_prompt},
@@ -156,16 +203,12 @@ async def ai_endpoint(request: AIRequest):
                 max_tokens=2000,
                 temperature=0.7,
             )
-            answer = gpt_response.choices[0].message.content.strip()
-
-            return {"answer": answer}
+            return {"answer": gpt_response.choices[0].message.content.strip()}
         else:
-            # Load the system instruction dynamically
+            # General AI response
             system_instruction = load_system_instruction()
-
-            # Call OpenAI ChatCompletion API for general questions
             gpt_response = openai_client.chat.completions.create(
-                model="gpt-4o",  # Use GPT-4o model
+                model="gpt-4o",
                 messages=[
                     {"role": "system", "content": system_instruction},
                     {"role": "user", "content": question},
@@ -173,12 +216,13 @@ async def ai_endpoint(request: AIRequest):
                 max_tokens=2000,
                 temperature=0.7,
             )
-            answer = gpt_response.choices[0].message.content.strip()
-
-        return {"answer": answer}
+            return {"answer": gpt_response.choices[0].message.content.strip()}
     except Exception as e:
-        logging.error(f"Error processing AI request: {e}")
-        return {"answer": "Sorry, I couldn't process your request."}
+        logging.error(f"OpenAI API error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to process the AI request. Please try again later.")
+    except Exception as e:
+        logging.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred. Please try again later.")
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
