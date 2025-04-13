@@ -62,40 +62,6 @@ body {
   border-radius: 2px; /* Slightly rounded corners */
 }
 
-/* Dummy Data Section */
-.dummy-data {
-  margin-top: 2rem;
-}
-
-.dummy-data ul {
-  list-style: none; /* Remove default bullet points */
-  padding: 0; /* Remove default padding */
-  margin: 0; /* Remove default margin */
-  background-color: transparent; /* Ensure the parent container is transparent */
-}
-
-.dummy-data li {
-  padding: 1rem; /* Add padding inside each list item */
-  margin-bottom: 0.5rem; /* Add spacing between list items */
-  background-color: #2d3748; /* Background color for list items */
-  border-radius: 8px; /* Rounded corners */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Add shadow */
-}
-
-/* Add spacing between nested lists */
-.dummy-data li ul {
-  margin-top: 0.5rem; /* Add spacing above nested lists */
-  padding-left: 1rem; /* Indent nested lists */
-}
-
-.dummy-data li ul li {
-  margin-bottom: 0.5rem; /* Add spacing between nested list items */
-}
-
-/* Add spacing inside divs */
-.dummy-data li div {
-  padding: 0.5rem 0; /* Add vertical padding inside divs */
-}
 
 /* AI Section */
 .ai-section {
@@ -170,78 +136,8 @@ body {
   background: linear-gradient(90deg, #50c878, #4a90e2); /* Reverse gradient on hover */
 }
 
-/* Style for the representative card */
-.rep-card {
-  padding: 0.5rem 1rem; /* Adjust padding */
-  margin: 3rem 6rem; /* Adjust margins */
-  background-color: rgba(45, 55, 72, 0.2) !important; /* Force transparency */
-  border-radius: 8px; /* Rounded corners */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Lighter shadow */
-  position: relative; /* Ensure proper stacking context */
-  z-index: 1; /* Place the card above the particle background */
-}
 
-/* Style for the representative header (name and role) */
-.rep-header {
-  font-size: 1rem; /* Slightly smaller font size */
-  font-weight: 600; /* Bold text */
-  margin-bottom: 0.25rem; /* Reduce spacing below the header */
-  text-align: center; /* Center-align the text */
-}
 
-/* Style for the horizontal divider */
-.divider {
-  border: none; /* Remove default border styling */
-  border-top: 2px solid rgba(255, 255, 255, 0.2); /* Add a custom horizontal line */
-  margin: 1rem 0; /* Add spacing above and below the line */
-}
-
-/* Horizontal layout for the content */
-.rep-content {
-  display: flex; /* Use Flexbox for horizontal layout */
-  align-items: center; /* Center items vertically */
-  gap: 0.5rem; /* Reduce spacing between the image and details */
-  min-height: 75px; /* Ensure the height matches the image */
-}
-
-/* Details section (70% width) */
-.rep-details {
-  flex: 1; /* Take up the remaining 70% width */
-  display: flex;
-  flex-direction: column; /* Stack content vertically */
-  justify-content: center; /* Center content vertically */
-  padding: 0.25rem; /* Reduce padding inside the details section */
-}
-
-.rep-details ul {
-  background-color: transparent; /* Ensure the background is transparent */
-  box-shadow: none; /* Remove any shadow from the list */
-}
-
-.rep-details ul li {
-  margin-bottom: 0.25rem; /* Reduce spacing between list items */
-  background-color: transparent; /* Ensure list items are transparent */
-}
-
-/* Image section (30% width) */
-.rep-image {
-  flex: 0 0 30%; /* Fix the width to 30% */
-  display: flex;
-  justify-content: center; /* Center the image horizontally */
-  align-items: center; /* Center the image vertically */
-  overflow: hidden; /* Ensure the image doesn't overflow the container */
-}
-
-/* Style for sales representative images */
-.sales-image {
-  max-width: 75%; /* Reduce the maximum width */
-  max-height: 75%; /* Reduce the maximum height */
-  object-fit: contain; /* Maintain the aspect ratio and fit within the container */
-  border-radius: 50%; /* Make the image circular */
-  border: 4px solid; /* Add a border */
-  border-image-source: linear-gradient(90deg, #4a90e2, #50c878); /* Gradient border */
-  border-image-slice: 1; /* Ensure the gradient covers the entire border */
-}
 
 /* Particle background */
 #tsparticles {
@@ -250,6 +146,10 @@ body {
   left: 0;
   z-index: -1; /* Ensure the particle background is behind all content */
 }
+
+
+
+
 
 /* Sidebar Styles */
 .sidebar {
@@ -586,3 +486,4 @@ body {
   gap: 10px; /* Add vertical spacing between user and AI bubbles */
   margin-bottom: 15px; /* Add spacing between response items */
 }
+

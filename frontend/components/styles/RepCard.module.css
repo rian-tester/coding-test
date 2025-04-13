@@ -1,0 +1,150 @@
+.rep-card {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  border-radius: 8px;
+  background-color: rgba(45, 55, 72, 0.2); /* Match sidebar transparency */
+  margin: 1rem; /* Adjust margin for better spacing */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column; /* Stack content vertically by default */
+}
+
+.rep-header {
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  background-color: rgba(45, 55, 72, 0.4); /* Match sidebar transparency */
+  padding: 0.5rem;
+  border-radius: 4px;
+  overflow: hidden; /* Prevent text overflow */
+  text-overflow: ellipsis; /* Add ellipsis for long text */
+  white-space: nowrap; /* Prevent text wrapping */
+}
+
+.divider {
+  margin: 1rem 0;
+  border: none;
+  border-top: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.rep-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 75px;
+  background-color: rgba(45, 55, 72, 0.4); /* Match sidebar transparency */
+  padding: 0.5rem;
+  border-radius: 4px;
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.rep-image {
+  flex: 0 0 30%; /* Fix the width to 30% */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.sales-image {
+  max-width: 100%; /* Ensure the image scales properly */
+  max-height: 100%; /* Ensure the image scales properly */
+  object-fit: contain;
+  border-radius: 50%;
+  border: 4px solid;
+  border-image-source: linear-gradient(90deg, #4a90e2, #50c878);
+  border-image-slice: 1;
+}
+
+.rep-details {
+  flex: 1; /* Take up the remaining width */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0.25rem;
+  overflow: hidden; /* Prevent scrollbars */
+}
+
+.rep-details ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  background-color: rgba(45, 55, 72, 0.4); /* Match sidebar transparency */
+  border-radius: 4px;
+  padding: 0.5rem;
+  word-wrap: break-word; /* Break long words */
+  word-break: break-word; /* Ensure long words break properly */
+}
+
+.rep-details li {
+  margin-bottom: 0.25rem;
+  color: #fff; /* Ensure text is readable */
+  overflow: hidden; /* Prevent text overflow */
+  text-overflow: ellipsis; /* Add ellipsis for long text */
+  white-space: normal; /* Allow text to wrap */
+}
+
+/* Deals Section */
+.deal-item {
+  background-color: rgba(45, 55, 72, 0.6); /* Match transparency */
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin-bottom: 0.25rem;
+  color: #fff; /* Ensure text is readable */
+  font-size: 0.9rem; /* Slightly smaller font size */
+  display: flex;
+  justify-content: space-between; /* Align text to the left and right */
+  align-items: center; /* Center vertically */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+  overflow: hidden; /* Prevent text overflow */
+  text-overflow: ellipsis; /* Add ellipsis for long text */
+  white-space: normal; /* Allow text to wrap */
+}
+
+.deal-item span {
+  font-weight: bold; /* Highlight important text */
+}
+
+.deal-item.closed-won {
+  background-color: rgba(50, 205, 50, 0.8); /* Green for Closed Won */
+}
+
+.deal-item.pending {
+  background-color: rgba(255, 165, 0, 0.8); /* Orange for Pending */
+}
+
+.deal-item.closed-lost {
+  background-color: rgba(220, 20, 60, 0.8); /* Red for Closed Lost */
+}
+
+/* Media Queries for Smaller Screens */
+@media (max-width: 768px) {
+  .rep-card {
+    flex-direction: column; /* Stack content vertically */
+  }
+
+  .rep-content {
+    flex-direction: column; /* Stack image and details vertically */
+    align-items: flex-start; /* Align items to the left */
+  }
+
+  .rep-image {
+    flex: 0 0 auto; /* Allow the image to resize dynamically */
+    margin-bottom: 1rem; /* Add spacing below the image */
+  }
+
+  .rep-header {
+    font-size: 1rem; /* Reduce font size for smaller screens */
+  }
+
+  .deal-item {
+    font-size: 0.8rem; /* Reduce font size for smaller screens */
+  }
+
+  .rep-details {
+    padding: 0.5rem; /* Add padding for smaller screens */
+  }
+}

@@ -3,6 +3,7 @@ import Head from "next/head";
 import Background from "../components/_background";
 import Sidebar from "../components/Sidebar";
 import ReactMarkdown from "react-markdown";
+import RepCard from "../components/RepCard"; // Import the RepCard component
 
 export default function Home() {
   const [users, setUsers] = useState([]);
@@ -103,36 +104,7 @@ export default function Home() {
                 ) : (
                   <ul>
                     {users.map((rep) => (
-                      <li key={rep.id} className="rep-card">
-                        <div className="rep-header">
-                          <strong>{rep.name}</strong> - {rep.role}
-                        </div>
-                        <hr className="divider" />
-                        <div className="rep-content">
-                          <div className="rep-image">
-                            <img
-                              src={`http://localhost:8000/images/${rep.name}.webp`}
-                              alt={rep.name}
-                              className="sales-image"
-                            />
-                          </div>
-                          <div className="rep-details">
-                            <ul>
-                              <li>Skills: {rep.skills.join(", ")}</li>
-                              <li>
-                                Deals:
-                                <ul>
-                                  {rep.deals.map((deal, index) => (
-                                    <li key={index}>
-                                      {deal.client} - ${deal.value} ({deal.status})
-                                    </li>
-                                  ))}
-                                </ul>
-                              </li>
-                            </ul>
-                          </div>
-                        </div>
-                      </li>
+                      <RepCard key={rep.id} rep={rep} /> // Use the RepCard component
                     ))}
                   </ul>
                 )}
