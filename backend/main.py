@@ -13,7 +13,21 @@ from pydantic import BaseModel
 load_dotenv()
 
 # Initialize FastAPI app
-app = FastAPI()
+app = FastAPI(
+    title="InterOpera API",
+    description="This is the backend API for the InterOpera project. It provides endpoints for managing sales representatives and AI-powered question answering.",
+    version="1.0.0",
+    terms_of_service="http://example.com/terms/",
+    contact={
+        "name": "InterOpera Support",
+        "url": "http://example.com/contact/",
+        "email": "support@example.com",
+    },
+    license_info={
+        "name": "MIT License",
+        "url": "https://opensource.org/licenses/MIT",
+    },
+)
 
 # Add CORS middleware
 app.add_middleware(
