@@ -7,6 +7,7 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 import logging
+from pydantic import BaseModel
 
 # Load environment variables
 load_dotenv()
@@ -61,20 +62,34 @@ def generate_dummy_data_response():
     response += "\n".join([f"- {rep}" for rep in sales_reps])
     return response
 
-@app.get("/api/sales-reps")
+@app.get("/api/sales-reps", summary="Get Sales Representatives", tags=["Sales Reps"])
 def get_sales_reps():
     """
     Returns a list of sales representatives from the dummy data.
+
+    **Response:**
+    - `200 OK`: A JSON object containing sales representatives and their details.
     """
     return DUMMY_DATA
 
-@app.post("/api/ai")
-async def ai_endpoint(request: Request):
+# Define a Pydantic model for the request body
+class AIRequest(BaseModel):
+    question: str
+
+@app.post("/api/ai", summary="AI Question Answering", tags=["AI"])
+async def ai_endpoint(request: AIRequest):
     """
     Handles AI question-answering requests.
+
+    **Request Body:**
+    - `question` (str): The question to be answered.
+
+    **Response:**
+    - `200 OK`: A JSON object containing the AI-generated answer.
+    - `400 Bad Request`: If the `question` field is missing or invalid.
+    - `500 Internal Server Error`: If an error occurs while processing the request.
     """
-    data = await request.json()
-    question = data.get("question", "")
+    question = request.question
     if not question:
         return {"error": "Question is required"}
 
