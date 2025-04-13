@@ -5,6 +5,7 @@ import uvicorn
 import json
 import os
 from dotenv import load_dotenv
+import openai
 from openai import OpenAI
 import logging
 from pydantic import BaseModel
@@ -170,7 +171,7 @@ async def ai_endpoint(request: AIRequest):
                 temperature=0.7,
             )
             return {"answer": gpt_response.choices[0].message.content.strip()}
-    except openai.error.OpenAIError as e:
+    except Exception as e:
         logging.error(f"OpenAI API error: {e}")
         raise HTTPException(status_code=500, detail="Failed to process the AI request. Please try again later.")
     except Exception as e:

@@ -2,6 +2,10 @@ import pytest
 from fastapi.testclient import TestClient
 from main import app
 from unittest.mock import MagicMock
+import openai
+import os
+import logging
+import requests
 
 client = TestClient(app)
 
@@ -36,3 +40,9 @@ def test_ai_endpoint_with_invalid_api_key(monkeypatch):
     # Assert the response
     assert response.status_code == 500  # Expecting 500 Internal Server Error
     assert response.json()["detail"] == "Failed to process the AI request. Please try again later."
+
+
+def test_env_file_exists():
+    # Check if the .env file exists in the backend folder
+    env_path = os.path.join(os.path.dirname(__file__), "../.env")
+    assert os.path.isfile(env_path), f".env file not found at {env_path}"
