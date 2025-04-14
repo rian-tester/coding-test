@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
-import Background from "../components/_background";
+import Background from "../components/Background";
 import Sidebar from "../components/Sidebar";
 import ReactMarkdown from "react-markdown";
 import RepCard from "../components/RepCard"; // Import the RepCard component

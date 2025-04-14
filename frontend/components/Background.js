@@ -1,5 +1,6 @@
 import { loadFull } from "tsparticles";
 import { Particles } from "react-tsparticles";
+import styles from "./styles/Background.module.css";
 
 export default function Background() {
   const particlesInit = async (main) => {
@@ -9,7 +10,7 @@ export default function Background() {
 
   return (
     <Particles
-      id="tsparticles"
+      id={styles.tsparticles}
       init={particlesInit}
       options={{
         fullScreen: { enable: true }, // Fullscreen background
