@@ -88,7 +88,7 @@ export default function Home() {
       <div className="layout">
         {/* Title Bar */}
         <div className="title-bar">
-          <h1>Next.js + FastAPI Sample</h1>
+          <h1>InterOpera Coding Test</h1>
         </div>
 
         {/* Sidebar and Main Content */}

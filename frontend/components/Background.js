@@ -24,8 +24,15 @@ export default function Background() {
         },
         interactivity: {
           events: {
-            onHover: { enable: true, mode: "repulse" }, // Only react to mouse hover
-            onClick: { enable: true, mode: "push" }, // React to mouse clicks
+            onHover: {
+              enable: true,
+              mode: "repulse", // React to mouse hover
+              detectsOn: "canvas", // Restrict hover detection to the particles canvas
+            },
+            onClick: {
+              enable: true,
+              mode: "push", // React to mouse clicks
+            },
             resize: true, // Ensure particles adjust on window resize
           },
           modes: {
