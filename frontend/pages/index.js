@@ -9,6 +9,7 @@ import Spinner from "../components/Spinner"; // Import the Spinner component
 export default function Home() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingAI, setLoadingAI] = useState(false); // New state for AI loading
   const [question, setQuestion] = useState("");
   const [answerHistory, setAnswerHistory] = useState([]); // Store history of questions and answers
   const [activeSection, setActiveSection] = useState("dummy-data"); // Default section
@@ -31,6 +32,7 @@ export default function Home() {
 
   const handleAskQuestion = async () => {
     if (question.trim() === "") return; // Prevent submitting empty or whitespace-only questions
+    setLoadingAI(true); // Start spinner
     try {
       const response = await fetch("http://localhost:8000/api/ai", {
         method: "POST",
@@ -52,6 +54,8 @@ export default function Home() {
       setQuestion(""); // Clear the text box after submission
     } catch (error) {
       console.error("Error in AI request:", error);
+    } finally {
+      setLoadingAI(false); // Stop spinner
     }
   };
 
@@ -136,23 +140,24 @@ export default function Home() {
                     </div>
                   </div>
 
-                  
-                  {/* Chat history */}
-                  <div className="response-history">
-                    {answerHistory.map((item, index) => (
-                      <div key={index} className="response-item">
-                        <div className="bubble user-bubble">
-                          <strong>Question:</strong> {item.question}
+                  {/* Show Spinner While Waiting for AI Response */}
+                  {loadingAI ? (
+                    <Spinner /> // Use Spinner for AI loading
+                  ) : (
+                    <div className="response-history">
+                      {answerHistory.map((item, index) => (
+                        <div key={index} className="response-item">
+                          <div className="bubble user-bubble">
+                            <strong>Question:</strong> {item.question}
+                          </div>
+                          <div className="bubble ai-bubble">
+                            <strong>AI Response:</strong>
+                            <ReactMarkdown>{item.answer}</ReactMarkdown>
+                          </div>
                         </div>
-                        <div className="bubble ai-bubble">
-                          <strong>AI Response:</strong>
-                          <ReactMarkdown>{item.answer}</ReactMarkdown>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  
+                      ))}
+                    </div>
+                  )}
                 </div>
               </section>
             )}
