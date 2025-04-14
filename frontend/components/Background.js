@@ -24,12 +24,13 @@ export default function Background() {
         },
         interactivity: {
           events: {
-            onHover: { enable: true, mode: "repulse" },
-            onClick: { enable: true, mode: "push" },
+            onHover: { enable: true, mode: "repulse" }, // Only react to mouse hover
+            onClick: { enable: true, mode: "push" }, // React to mouse clicks
+            resize: true, // Ensure particles adjust on window resize
           },
           modes: {
-            repulse: { distance: 100 },
-            push: { quantity: 4 },
+            repulse: { distance: 100 }, // Repulse particles on hover
+            push: { quantity: 4 }, // Add particles on click
           },
         },
         background: {

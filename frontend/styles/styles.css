@@ -10,14 +10,14 @@ body {
 /* Container */
 .container {
   position: relative; /* Ensure proper stacking context */
-  min-height: 100vh; /* Make the container stretch to the full height of the viewport */
-  width: 100%; /* Make the container stretch to the full width of the screen */
+  min-height: 100vh; /* Stretch to full viewport height */
+  width: 100%; /* Stretch to full viewport width */
   padding: 2rem; /* Add padding inside the container */
   background-color: rgba(0, 0, 0, 0.1); /* Background color */
   border-radius: 8px; /* Rounded corners */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Add shadow */
   box-sizing: border-box; /* Include padding in width/height calculations */
-  z-index: 1; /* Place the container above the particle background */
+  z-index: 1; /* Place above the particle background */
 }
 
 /* Title Bar */
@@ -30,6 +30,7 @@ body {
   z-index: 10;
 }
 
+/* Title Bar Text */
 .title-bar h1 {
   font-size: 2.5rem;
   font-weight: 700;
@@ -37,6 +38,15 @@ body {
   color: white;
   animation: fadeIn 3s ease-in, bounce 4s ease-in-out; /* Add bounce animation */
 }
+
+/* Layout Styles */
+.layout {
+  display: flex;
+  flex-direction: column; /* Stack title bar on top */
+  height: 100vh; /* Full viewport height */
+  overflow: hidden; /* Prevent body from scrolling */
+}
+
 
 /* Section Headers */
 .section-header {
@@ -46,6 +56,7 @@ body {
   margin-bottom: 1rem; /* Add spacing below the H2 title */
 }
 
+/* Color for section headers */
 .section-header.blue,
 .section-header.green {
   color: #4a90e2; /* Use blue for both */
@@ -63,13 +74,24 @@ body {
 }
 
 
-/* AI Section */
-.ai-section {
-  margin-top: 2rem;
+/* Content Wrapper */
+.content-wrapper {
+  display: flex;
+  flex: 1 1; /* Take up remaining space below the title */
+  overflow: hidden; /* Prevent horizontal scrolling */
 }
 
+/* Main Content Styles */
+.main-content {
+  flex: 1 1; /* Take up remaining horizontal space */
+  padding: 2rem;
+  overflow-y: auto; /* Allow vertical scrolling for main content */
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  box-sizing: border-box; /* Include padding in width calculations */
+  height: calc(100vh - 4rem); /* Adjust height to fit within the viewport */
+}
 
-/* title animation */
+/* Title Animation */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -93,30 +115,7 @@ body {
   }
 }
 
-/* Layout Styles */
-.layout {
-  display: flex;
-  flex-direction: column; /* Stack title bar on top */
-  height: 100vh; /* Full viewport height */
-  overflow: hidden; /* Prevent body from scrolling */
-}
 
-/* Content Wrapper */
-.content-wrapper {
-  display: flex;
-  flex: 1 1; /* Take up remaining space below the title */
-  overflow: hidden; /* Prevent horizontal scrolling */
-}
-
-/* Main Content Styles */
-.main-content {
-  flex: 1 1; /* Take up remaining horizontal space */
-  padding: 2rem;
-  overflow-y: auto; /* Allow vertical scrolling for main content */
-  overflow-x: hidden; /* Prevent horizontal scrolling */
-  box-sizing: border-box; /* Include padding in width calculations */
-  height: calc(100vh - 4rem); /* Adjust height to fit within the viewport */
-}
 
 
 
