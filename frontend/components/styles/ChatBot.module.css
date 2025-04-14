@@ -1,0 +1,196 @@
+/* Chat container to align everything vertically */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 100%;
+}
+
+/* Chat history */
+.response-history {
+  flex: 3;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 15px;
+  padding: 10px;
+  background-color: rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+}
+
+/* Input container */
+.input-container {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+/* Text area */
+.question-textbox {
+  width: 100%;
+  height: 8rem;
+  padding: 0.5rem;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  resize: none;
+  box-sizing: border-box;
+}
+
+/* Button container */
+.button-container {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* Shared Button Styles */
+.clear-button,
+.ask-button {
+  padding: 0.5rem 1.5rem;
+  background: linear-gradient(90deg, #4a90e2, #50c878);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  height: 2.5rem;
+  margin-top: 0.5rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  box-sizing: border-box;
+}
+
+.clear-button:hover,
+.ask-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Response item */
+.response-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+/* Chat bubble base style */
+.bubble {
+  padding: 10px 15px;
+  border-radius: 15px;
+  max-width: 90%;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  box-sizing: border-box;
+  overflow-y: auto;
+  max-height: 300px;
+}
+
+/* Custom scrollbar for bubbles */
+.bubble::-webkit-scrollbar {
+    width: 6px; /* Smaller scrollbar width */
+}
+
+.bubble::-webkit-scrollbar-thumb {
+    background-color: #888; /* Darker scrollbar thumb */
+    border-radius: 10px; /* Rounded scrollbar thumb */
+}
+
+.bubble::-webkit-scrollbar-thumb:hover {
+    background-color: #555; /* Darker on hover */
+}
+  
+/* User bubble */
+.user-bubble {
+  align-self: flex-end;
+  background-color: #007bff;
+  color: white;
+  text-align: right;
+}
+
+/* AI bubble */
+.ai-bubble {
+  align-self: flex-start;
+  background-color: #f1f1f1;
+  color: black;
+  text-align: left;
+}
+
+/* Disabled Input Field */
+.question-textbox:disabled {
+  background-color: #f0f0f0;
+  color: #a0a0a0;
+  cursor: not-allowed;
+}
+
+/* Disabled Buttons */
+.clear-button:disabled,
+.ask-button:disabled {
+  background: linear-gradient(90deg, #c0c0c0, #a0a0a0);
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+
+
+/* Markdown styles */
+.bubble .markdown {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem; /* Slightly smaller font size */
+    line-height: 1.3; /* Reduce line height for compactness */
+    margin: 0; /* Remove default margins */
+    padding: 0; /* Remove default padding */
+  }
+  
+  .bubble .markdown h1,
+  .bubble .markdown h2,
+  .bubble .markdown h3 {
+    font-weight: bold;
+    margin: 0.2rem 0; /* Reduce spacing above and below headings */
+    font-size: 1rem; /* Slightly smaller heading size */
+  }
+  
+  .bubble .markdown ul,
+  .bubble .markdown ol {
+    margin: 0.2rem 0; /* Reduce spacing above and below lists */
+    padding-left: 1rem; /* Reduce list indentation */
+  }
+  
+  .bubble .markdown ol {
+    list-style-position: inside; /* Align numbering with the text */
+  }
+  
+  .bubble .markdown ul {
+    list-style-type: disc; /* Use bullet points for unordered lists */
+    list-style-position: inside; /* Align bullet points with the text */
+  }
+  
+  .bubble .markdown li {
+    margin-bottom: 0.1rem; /* Reduce spacing between list items */
+  }
+  
+  .bubble .markdown p {
+    margin: 0.2rem 0; /* Reduce spacing between paragraphs */
+  }
+  
+  .bubble .markdown h1 + p,
+  .bubble .markdown h2 + p,
+  .bubble .markdown h3 + p {
+    margin-top: 0.1rem; /* Reduce spacing between headings and paragraphs */
+  }
+  

@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
 import Background from "../components/Background";
-import Sidebar from "../components/Sidebar";
-import ReactMarkdown from "react-markdown";
+import Sidebar from "../components/Sidebar"; // Import the Sidebar component
 import RepCard from "../components/RepCard"; // Import the RepCard component
 import Spinner from "../components/Spinner"; // Import the Spinner component
+import ChatBot from "../components/ChatBot"; // Import the ChatBot component
 
 export default function Home() {
   const [users, setUsers] = useState([]);
@@ -121,53 +121,15 @@ export default function Home() {
             {activeSection === "ai-section" && (
               <section className="ai-section">
                 <h2 className="section-header blue">Ask a Question</h2>
-                <div className="chat-container">
-                  <div className="input-container">
-                    <textarea
-                      placeholder="Shift + Enter for new line"
-                      value={question}
-                      onChange={(e) => setQuestion(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      className="question-textbox"
-                      disabled={loadingAI} // Disable input while loading
-                    />
-                    <div className="button-container">
-                      <button
-                        onClick={handleClearChat}
-                        className="clear-button"
-                        disabled={loadingAI} // Disable clear button while loading
-                      >
-                        Clear
-                      </button>
-                      <button
-                        onClick={handleAskQuestion}
-                        className="ask-button"
-                        disabled={loadingAI} // Disable ask button while loading
-                      >
-                        Ask
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Show Spinner While Waiting for AI Response */}
-                  {loadingAI ? (
-                    <Spinner /> // Use Spinner for AI loading
-                  ) : (
-                    <div className="response-history">
-                      {answerHistory.map((item, index) => (
-                        <div key={index} className="response-item">
-                          <div className="bubble user-bubble">
-                            <strong>Question:</strong> {item.question}
-                          </div>
-                          <div className="bubble ai-bubble">
-                            <strong>AI Response:</strong>
-                            <ReactMarkdown>{item.answer}</ReactMarkdown>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <ChatBot
+                  question={question}
+                  setQuestion={setQuestion}
+                  answerHistory={answerHistory}
+                  loadingAI={loadingAI}
+                  handleAskQuestion={handleAskQuestion}
+                  handleClearChat={handleClearChat}
+                  handleKeyDown={handleKeyDown}
+                />
               </section>
             )}
           </div>
