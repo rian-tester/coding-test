@@ -129,12 +129,21 @@ export default function Home() {
                       onChange={(e) => setQuestion(e.target.value)}
                       onKeyDown={handleKeyDown}
                       className="question-textbox"
+                      disabled={loadingAI} // Disable input while loading
                     />
                     <div className="button-container">
-                      <button onClick={handleClearChat} className="clear-button">
+                      <button
+                        onClick={handleClearChat}
+                        className="clear-button"
+                        disabled={loadingAI} // Disable clear button while loading
+                      >
                         Clear
                       </button>
-                      <button onClick={handleAskQuestion} className="ask-button">
+                      <button
+                        onClick={handleAskQuestion}
+                        className="ask-button"
+                        disabled={loadingAI} // Disable ask button while loading
+                      >
                         Ask
                       </button>
                     </div>
