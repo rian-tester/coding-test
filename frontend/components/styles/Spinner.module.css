@@ -1,0 +1,32 @@
+.spinner {
+  width: 80px;
+  height: 80px;
+  position: relative;
+  margin: 0 auto;
+}
+
+.doubleBounce1,
+.doubleBounce2 {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: #4a90e2; /* Blue color for the spinner */
+  opacity: 0.6;
+  position: absolute;
+  top: 0;
+  left: 0;
+  animation: bounce 2s infinite ease-in-out;
+}
+
+.doubleBounce2 {
+  animation-delay: -1s;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1);
+  }
+}

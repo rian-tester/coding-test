@@ -4,6 +4,7 @@ import Background from "../components/_background";
 import Sidebar from "../components/Sidebar";
 import ReactMarkdown from "react-markdown";
 import RepCard from "../components/RepCard"; // Import the RepCard component
+import Spinner from "../components/Spinner"; // Import the Spinner component
 
 export default function Home() {
   const [users, setUsers] = useState([]);
@@ -14,16 +15,18 @@ export default function Home() {
   const [isDocked, setIsDocked] = useState(false); // Sidebar docking state
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/sales-reps")
-      .then((res) => res.json())
-      .then((data) => {
-        setUsers(data.salesReps || []);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Failed to fetch data:", err);
-        setLoading(false);
-      });
+    setTimeout(() => {
+      fetch("http://localhost:8000/api/sales-reps")
+        .then((res) => res.json())
+        .then((data) => {
+          setUsers(data.salesReps || []);
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error("Failed to fetch data:", err);
+          setLoading(false);
+        });
+    }, 750); // Simulate a 2-second delay
   }, []);
 
   const handleAskQuestion = async () => {
@@ -100,7 +103,7 @@ export default function Home() {
               <section className="dummy-data">
                 <h2 className="section-header blue">Dummy Data</h2>
                 {loading ? (
-                  <p>Loading...</p>
+                  <Spinner /> // Use the Spinner component here
                 ) : (
                   <ul>
                     {users.map((rep) => (
