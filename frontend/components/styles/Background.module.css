@@ -1,0 +1,10 @@
+/* Particle background */
+#tsparticles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1; /* Ensure the particle background is behind all content */
+  }
+  
+  
+  

@@ -10,14 +10,14 @@ body {
 /* Container */
 .container {
   position: relative; /* Ensure proper stacking context */
-  min-height: 100vh; /* Make the container stretch to the full height of the viewport */
-  width: 100%; /* Make the container stretch to the full width of the screen */
+  min-height: 100vh; /* Stretch to full viewport height */
+  width: 100%; /* Stretch to full viewport width */
   padding: 2rem; /* Add padding inside the container */
   background-color: rgba(0, 0, 0, 0.1); /* Background color */
   border-radius: 8px; /* Rounded corners */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Add shadow */
   box-sizing: border-box; /* Include padding in width/height calculations */
-  z-index: 1; /* Place the container above the particle background */
+  z-index: 1; /* Place above the particle background */
 }
 
 /* Title Bar */
@@ -30,6 +30,7 @@ body {
   z-index: 10;
 }
 
+/* Title Bar Text */
 .title-bar h1 {
   font-size: 2.5rem;
   font-weight: 700;
@@ -37,6 +38,15 @@ body {
   color: white;
   animation: fadeIn 3s ease-in, bounce 4s ease-in-out; /* Add bounce animation */
 }
+
+/* Layout Styles */
+.layout {
+  display: flex;
+  flex-direction: column; /* Stack title bar on top */
+  height: 100vh; /* Full viewport height */
+  overflow: hidden; /* Prevent body from scrolling */
+}
+
 
 /* Section Headers */
 .section-header {
@@ -46,6 +56,7 @@ body {
   margin-bottom: 1rem; /* Add spacing below the H2 title */
 }
 
+/* Color for section headers */
 .section-header.blue,
 .section-header.green {
   color: #4a90e2; /* Use blue for both */
@@ -62,274 +73,25 @@ body {
   border-radius: 2px; /* Slightly rounded corners */
 }
 
-/* Dummy Data Section */
-.dummy-data {
-  margin-top: 2rem;
-}
 
-.dummy-data ul {
-  list-style: none; /* Remove default bullet points */
-  padding: 0; /* Remove default padding */
-  margin: 0; /* Remove default margin */
-  background-color: transparent; /* Ensure the parent container is transparent */
-}
-
-.dummy-data li {
-  padding: 1rem; /* Add padding inside each list item */
-  margin-bottom: 0.5rem; /* Add spacing between list items */
-  background-color: #2d3748; /* Background color for list items */
-  border-radius: 8px; /* Rounded corners */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Add shadow */
-}
-
-/* Add spacing between nested lists */
-.dummy-data li ul {
-  margin-top: 0.5rem; /* Add spacing above nested lists */
-  padding-left: 1rem; /* Indent nested lists */
-}
-
-.dummy-data li ul li {
-  margin-bottom: 0.5rem; /* Add spacing between nested list items */
-}
-
-/* Add spacing inside divs */
-.dummy-data li div {
-  padding: 0.5rem 0; /* Add vertical padding inside divs */
-}
-
-/* AI Section */
-.ai-section {
-  margin-top: 2rem;
-}
-
-.ai-section input {
-  padding: 0.5rem;
-  border-radius: 4px;
-  border: 1px solid #cbd5e0;
-  margin-right: 0.5rem;
-}
-
-.ai-section input::placeholder {
-  font-family: 'Poppins', sans-serif; /* Use Poppins font */
-  color: #a0aec0; /* Optional: Light gray color for the placeholder */
-  font-size: 1rem; /* Match the font size of the input text */
-}
-
-.ai-section button {
-  padding: 0.5rem 1rem;
-  background: linear-gradient(90deg, #4a90e2, #50c878);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.ai-section .response {
-  margin-top: 1rem;
-  padding: 1rem;
-  background-color: #4a5568;
-  border-radius: 8px;
-}
-
-/* AI Section Styles */
-.question-container {
+/* Content Wrapper */
+.content-wrapper {
   display: flex;
-  flex-direction: column; /* Stack the text box and button vertically */
-  width: 100%; /* Ensure it fills the content div */
+  flex: 1 1; /* Take up remaining space below the title */
+  overflow: hidden; /* Prevent horizontal scrolling */
 }
 
-.question-textbox {
-  width: 100%; /* Fill the width of the content div */
-  height: 8rem; /* Set height to cover at least 5 lines of text */
-  padding: 0.5rem;
-  font-family: 'Poppins', sans-serif; /* Use Poppins font */
-  font-size: 1rem;
-  border: 1px solid #cbd5e0;
-  border-radius: 4px;
-  resize: none; /* Disable resizing */
-  box-sizing: border-box; /* Include padding in width/height calculations */
+/* Main Content Styles */
+.main-content {
+  flex: 1 1; /* Take up remaining horizontal space */
+  padding: 2rem;
+  overflow-y: auto; /* Allow vertical scrolling for main content */
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  box-sizing: border-box; /* Include padding in width calculations */
+  height: calc(100vh - 4rem); /* Adjust height to fit within the viewport */
 }
 
-.ask-button {
-  align-self: flex-end; /* Align the button to the right */
-  margin-top: 0.5rem; /* Add spacing between the text box and button */
-  padding: 0.5rem 1.5rem; /* Increase button width slightly */
-  background: linear-gradient(90deg, #4a90e2, #50c878);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  font-family: 'Poppins', sans-serif; /* Use Poppins font */
-  font-size: 1rem;
-  transition: background-color 0.3s ease;
-}
-
-.ask-button:hover {
-  background: linear-gradient(90deg, #50c878, #4a90e2); /* Reverse gradient on hover */
-}
-
-/* Style for the representative card */
-.rep-card {
-  padding: 0.5rem 1rem; /* Adjust padding */
-  margin: 3rem 6rem; /* Adjust margins */
-  background-color: rgba(45, 55, 72, 0.2) !important; /* Force transparency */
-  border-radius: 8px; /* Rounded corners */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Lighter shadow */
-  position: relative; /* Ensure proper stacking context */
-  z-index: 1; /* Place the card above the particle background */
-}
-
-/* Style for the representative header (name and role) */
-.rep-header {
-  font-size: 1rem; /* Slightly smaller font size */
-  font-weight: 600; /* Bold text */
-  margin-bottom: 0.25rem; /* Reduce spacing below the header */
-  text-align: center; /* Center-align the text */
-}
-
-/* Style for the horizontal divider */
-.divider {
-  border: none; /* Remove default border styling */
-  border-top: 2px solid rgba(255, 255, 255, 0.2); /* Add a custom horizontal line */
-  margin: 1rem 0; /* Add spacing above and below the line */
-}
-
-/* Horizontal layout for the content */
-.rep-content {
-  display: flex; /* Use Flexbox for horizontal layout */
-  align-items: center; /* Center items vertically */
-  gap: 0.5rem; /* Reduce spacing between the image and details */
-  min-height: 75px; /* Ensure the height matches the image */
-}
-
-/* Details section (70% width) */
-.rep-details {
-  flex: 1; /* Take up the remaining 70% width */
-  display: flex;
-  flex-direction: column; /* Stack content vertically */
-  justify-content: center; /* Center content vertically */
-  padding: 0.25rem; /* Reduce padding inside the details section */
-}
-
-.rep-details ul {
-  background-color: transparent; /* Ensure the background is transparent */
-  box-shadow: none; /* Remove any shadow from the list */
-}
-
-.rep-details ul li {
-  margin-bottom: 0.25rem; /* Reduce spacing between list items */
-  background-color: transparent; /* Ensure list items are transparent */
-}
-
-/* Image section (30% width) */
-.rep-image {
-  flex: 0 0 30%; /* Fix the width to 30% */
-  display: flex;
-  justify-content: center; /* Center the image horizontally */
-  align-items: center; /* Center the image vertically */
-  overflow: hidden; /* Ensure the image doesn't overflow the container */
-}
-
-/* Style for sales representative images */
-.sales-image {
-  max-width: 75%; /* Reduce the maximum width */
-  max-height: 75%; /* Reduce the maximum height */
-  object-fit: contain; /* Maintain the aspect ratio and fit within the container */
-  border-radius: 50%; /* Make the image circular */
-  border: 4px solid; /* Add a border */
-  border-image-source: linear-gradient(90deg, #4a90e2, #50c878); /* Gradient border */
-  border-image-slice: 1; /* Ensure the gradient covers the entire border */
-}
-
-/* Particle background */
-#tsparticles {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: -1; /* Ensure the particle background is behind all content */
-}
-
-/* Sidebar Styles */
-.sidebar {
-  position: relative; /* Ensure the sidebar has a stacking context */
-  width: 200px;
-  background-color: rgba(45, 55, 72, 0.9); /* Semi-transparent dark background */
-  color: white;
-  padding: 1rem;
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-  z-index: 20; /* Ensure it appears above the main content */
-  transition: width 0.3s ease; /* Smooth transition for docking */
-  flex-shrink: 0; /* Prevent sidebar from shrinking */
-  overflow: visible; /* Allow child elements to overflow */
-}
-
-.sidebar.docked {
-  width: 5px; /* Narrow width when docked */
-  padding: 0.5rem; /* Reduce padding to make it minimal */
-}
-
-.sidebar ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  opacity: 1; /* Fully visible when not docked */
-  transition: opacity 0.3s ease, transform 0.3s ease; /* Smooth transition for visibility */
-}
-
-.sidebar.docked ul {
-  opacity: 0; /* Make the items invisible when docked */
-  transform: scale(0.8); /* Slightly shrink the items */
-  pointer-events: none; /* Prevent interaction when docked */
-}
-
-.sidebar ul li {
-  margin: 1rem 0;
-  cursor: pointer;
-  font-size: 1.2rem; /* Restore previous text size */
-  font-weight: 600;
-  color: #ffffff;
-  text-align: center; /* Ensure text is centered */
-  transition: color 0.3s ease, transform 0.3s ease; /* Smooth transition for hover effects */
-  transform-origin: center; /* Anchor scaling effect from the center */
-}
-
-.sidebar ul li:hover {
-  color: #4a90e2; /* Change hover color to blue */
-  transform: scale(1.1); /* Slightly increase the size on hover */
-}
-
-/* Toggle Button */
-.toggle-button {
-  position: absolute; /* Ensure the button is positioned relative to the sidebar */
-  top: 50%;
-  right: -15px; /* Position the button outside the sidebar */
-  transform: translateY(-50%);
-  width: 30px;
-  height: 30px;
-  background-color: #4a90e2;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  z-index: 100; /* Ensure the button appears above other elements */
-  transition: transform 0.3s ease;
-}
-
-.sidebar.docked .toggle-button {
-  right: -15px; /* Ensure the button remains fully visible when docked */
-}
-
-.toggle-button:hover {
-  transform: translateY(-50%) scale(1.1); /* Add hover effect */
-}
-
+/* Title Animation */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -353,236 +115,38 @@ body {
   }
 }
 
-/* Layout Styles */
-.layout {
-  display: flex;
-  flex-direction: column; /* Stack title bar on top */
-  height: 100vh; /* Full viewport height */
-  overflow: hidden; /* Prevent body from scrolling */
-}
-
-/* Content Wrapper */
-.content-wrapper {
-  display: flex;
-  flex: 1 1; /* Take up remaining space below the title */
-  overflow: hidden; /* Prevent horizontal scrolling */
-}
-
-/* Main Content Styles */
-.main-content {
-  flex: 1 1; /* Take up remaining horizontal space */
-  padding: 2rem;
-  overflow-y: auto; /* Allow vertical scrolling for main content */
-  overflow-x: hidden; /* Prevent horizontal scrolling */
-  box-sizing: border-box; /* Include padding in width calculations */
-  height: calc(100vh - 4rem); /* Adjust height to fit within the viewport */
-}
-
-/* Button Container */
-.button-container {
-  display: flex;
-  justify-content: flex-end; /* Align buttons to the right */
-  align-items: center; /* Ensure buttons are vertically aligned */
-  gap: 0.5rem; /* Add spacing between the buttons */
-  margin-top: 0.5rem; /* Add spacing above the buttons */
-  width: 100%; /* Ensure the container spans the full width */
-  box-sizing: border-box; /* Include padding and border in width calculations */
-}
-
-/* Shared Button Styles */
-.clear-button,
-.ask-button {
-  padding: 0.5rem 1.5rem; /* Ensure both buttons have the same size */
-  background: linear-gradient(90deg, #4a90e2, #50c878);
+/* Sound Toggle Button */
+.sound-toggle {
+  position: fixed;
+  bottom: 20px; /* Distance from the bottom of the screen */
+  right: 20px; /* Distance from the right of the screen */
+  width: 30px;
+  height: 30px;
+  background-color: #4a90e2; /* Blue background */
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 50%; /* Make it circular */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Add a subtle shadow */
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  font-family: 'Poppins', sans-serif; /* Use Poppins font */
-  font-size: 1rem;
-  height: 2.5rem; /* Set a fixed height for both buttons */
-  margin-top: 0.5rem; /* Add consistent top margin for both buttons */
-  transition: background-color 0.3s ease;
+  font-size: 1.2rem; /* Adjust icon size */
   display: flex;
-  align-items: center; /* Center text vertically */
-  justify-content: center; /* Center text horizontally */
-  min-width: 120px; /* Ensure both buttons have the same minimum width */
-  box-sizing: border-box; /* Include padding and border in height/width calculations */
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, background-color 0.2s ease;
 }
 
-.clear-button:hover,
-.ask-button:hover {
-  background: linear-gradient(90deg, #50c878, #4a90e2); /* Reverse gradient on hover */
+.sound-toggle:hover {
+  background-color: #50c878; /* Change color on hover */
+  transform: scale(1.1); /* Slightly enlarge on hover */
 }
 
-/* Response History */
-.response-history {
-  display: flex;
-  flex-direction: column-reverse; /* Newest chat at the top */
-  gap: 15px; /* Add consistent spacing between chat bubbles */
-  margin-top: 20px;
-  padding: 10px; /* Add padding around the chat history */
-  background-color: rgba(0, 0, 0, 0.25); /* Optional: Light background for the chat area */
-  border-radius: 10px; /* Rounded corners for the chat area */
-  max-height: 400px; /* Limit the height of the chat area */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional: Add a subtle shadow */
-  /* Remove scrollbar */
-  flex: 1; /* Allow the response history to grow and take available space */
-  overflow: visible; /* Remove its own scrollbar */
+.sound-toggle:active {
+  transform: scale(0.9); /* Slightly shrink on click */
 }
 
-/* Chat container to align everything vertically */
-.chat-container {
-  display: flex;
-  flex-direction: column; /* Stack chat history and input area vertically */
-  height: 100%; /* Take full height of the section */
-  max-height: 100%; /* Prevent overflow */
-}
 
-/* Chat history */
-.response-history {
-  flex: 3; /* Take 60% of the height */
-  display: flex;
-  flex-direction: column-reverse; /* Newest chat at the top */
-  gap: 15px; /* Add consistent spacing between chat bubbles */
-  padding: 10px; /* Add padding around the chat history */
-  background-color: rgba(0, 0, 0, 0.25); /* Optional: Light background for the chat area */
-  border-radius: 10px; /* Rounded corners for the chat area */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional: Add a subtle shadow */
-  overflow-y: auto; /* Add vertical scrolling for long chat histories */
-}
 
-/* Input container */
-.input-container {
-  flex: 2; /* Take 40% of the height */
-  display: flex;
-  flex-direction: column; /* Stack text area and buttons vertically */
-  gap: 10px; /* Add spacing between the text area and buttons */
-  padding: 10px; /* Add padding around the input area */
-  background-color: rgba(255, 255, 255, 0.1); /* Optional: Light background for the input area */
-  border-radius: 10px; /* Rounded corners for the input area */
-}
 
-/* Text area */
-.question-textbox {
-  width: 100%; /* Fill the width of the container */
-  height: 100%; /* Take up available height */
-  padding: 0.5rem;
-  font-family: 'Poppins', sans-serif; /* Use Poppins font */
-  font-size: 1rem;
-  border: 1px solid #cbd5e0;
-  border-radius: 4px;
-  resize: none; /* Disable resizing */
-  box-sizing: border-box; /* Include padding in width/height calculations */
-}
 
-/* Button container */
-.button-container {
-  display: flex;
-  justify-content: flex-end; /* Align buttons to the right */
-  gap: 0.5rem; /* Add spacing between the buttons */
-}
 
-.response-item {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
 
-.bubble {
-  padding: 10px 15px;
-  border-radius: 15px;
-  max-width: 90%; /* Allow the bubble to take up more space */
-  word-wrap: break-word; /* Ensure long words wrap properly */
-  white-space: pre-wrap; /* Preserve line breaks and whitespace */
-  overflow-wrap: break-word; /* Break long words if necessary */
-  box-sizing: border-box; /* Include padding in width calculations */
-  overflow-y: auto; /* Add vertical scrolling for long content */
-  max-height: 300px; /* Limit the height of the bubble */
-}
-
-/* Custom scrollbar for bubbles */
-.bubble::-webkit-scrollbar {
-  width: 6px; /* Smaller scrollbar width */
-}
-
-.bubble::-webkit-scrollbar-thumb {
-  background-color: #888; /* Darker scrollbar thumb */
-  border-radius: 10px; /* Rounded scrollbar thumb */
-}
-
-.bubble::-webkit-scrollbar-thumb:hover {
-  background-color: #555; /* Darker on hover */
-}
-
-/* User bubble */
-.user-bubble {
-  align-self: flex-end;
-  background-color: #007bff;
-  color: white;
-  text-align: right;
-}
-
-/* AI bubble */
-.ai-bubble {
-  align-self: flex-start;
-  background-color: #f1f1f1;
-  color: black;
-  text-align: left;
-}
-
-/* Markdown styles */
-.bubble .markdown {
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.9rem; /* Slightly smaller font size */
-  line-height: 1.3; /* Reduce line height for compactness */
-  margin: 0; /* Remove default margins */
-  padding: 0; /* Remove default padding */
-}
-
-.bubble .markdown h1,
-.bubble .markdown h2,
-.bubble .markdown h3 {
-  font-weight: bold;
-  margin: 0.2rem 0; /* Reduce spacing above and below headings */
-  font-size: 1rem; /* Slightly smaller heading size */
-}
-
-.bubble .markdown ul,
-.bubble .markdown ol {
-  margin: 0.2rem 0; /* Reduce spacing above and below lists */
-  padding-left: 1rem; /* Reduce list indentation */
-}
-
-.bubble .markdown ol {
-  list-style-position: inside; /* Align numbering with the text */
-}
-
-.bubble .markdown ul {
-  list-style-type: disc; /* Use bullet points for unordered lists */
-  list-style-position: inside; /* Align bullet points with the text */
-}
-
-.bubble .markdown li {
-  margin-bottom: 0.1rem; /* Reduce spacing between list items */
-}
-
-.bubble .markdown p {
-  margin: 0.2rem 0; /* Reduce spacing between paragraphs */
-}
-
-.bubble .markdown h1 + p,
-.bubble .markdown h2 + p,
-.bubble .markdown h3 + p {
-  margin-top: 0.1rem; /* Reduce spacing between headings and paragraphs */
-}
-
-/* Response item */
-.response-item {
-  display: flex;
-  flex-direction: column; /* Stack user and AI bubbles vertically */
-  align-items: flex-start; /* Align bubbles to the left by default */
-  gap: 10px; /* Add vertical spacing between user and AI bubbles */
-  margin-bottom: 15px; /* Add spacing between response items */
-}
