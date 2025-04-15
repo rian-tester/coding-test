@@ -190,7 +190,7 @@ api_ai_doc = """
 class AIRequest(BaseModel):
     question: str
 
-@app.post("/api/ai", summary="AI Question Answering", tags=["AI"],description=api_ai_doc)
+@app.post("/api/ai", summary="AI Question Answering", tags=["AI"], description=api_ai_doc)
 async def ai_endpoint(request: AIRequest):
     """
     Handles AI-powered question-answering requests.
@@ -215,6 +215,11 @@ async def ai_endpoint(request: AIRequest):
                         "data": json.dumps(rep),
                         "system_instruction": system_instruction
                     })
+                    # Ensure response is a string
+                    if hasattr(response, "content"):
+                        response = response.content  # Extract content if it's an AIMessage
+                    elif not isinstance(response, str):
+                        response = json.dumps(response)  # Convert to string if it's not
                     return {"answer": response}
 
             # General response for all sales reps
@@ -223,6 +228,11 @@ async def ai_endpoint(request: AIRequest):
                 "data": json.dumps(sales_reps),
                 "system_instruction": system_instruction
             })
+            # Ensure response is a string
+            if hasattr(response, "content"):
+                response = response.content  # Extract content if it's an AIMessage
+            elif not isinstance(response, str):
+                response = json.dumps(response)  # Convert to string if it's not
             return {"answer": response}
         else:
             # General AI response
@@ -231,6 +241,11 @@ async def ai_endpoint(request: AIRequest):
                 "data": "No specific data available.",
                 "system_instruction": system_instruction
             })
+            # Ensure response is a string
+            if hasattr(response, "content"):
+                response = response.content  # Extract content if it's an AIMessage
+            elif not isinstance(response, str):
+                response = json.dumps(response)  # Convert to string if it's not
             return {"answer": response}
     except Exception as e:
         logging.error(f"OpenAI API error: {e}")

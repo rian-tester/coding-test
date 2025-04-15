@@ -3,6 +3,14 @@ import ReactMarkdown from "react-markdown";
 import Spinner from "./Spinner";
 import styles from "./styles/ChatBot.module.css";
 
+function MarkdownRenderer({ content }) {
+    if (typeof content !== 'string') {
+        console.error('Expected string content for MarkdownRenderer, received:', content);
+        content = JSON.stringify(content); // Fallback to string
+    }
+    return <ReactMarkdown>{content}</ReactMarkdown>;
+}
+
 export default function ChatBot({
   question,
   setQuestion,
@@ -52,7 +60,7 @@ export default function ChatBot({
               </div>
               <div className={`${styles.bubble} ${styles["ai-bubble"]}`}>
                 <strong>AI Response:</strong>
-                <ReactMarkdown>{item.answer}</ReactMarkdown>
+                <MarkdownRenderer content={item.answer} />
               </div>
             </div>
           ))}
