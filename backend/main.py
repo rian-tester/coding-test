@@ -5,14 +5,10 @@ import uvicorn
 import json
 import os
 from dotenv import load_dotenv
-import openai
-from openai import OpenAI
 import logging
 from pydantic import BaseModel
 from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
-from langchain_community.chat_message_histories import ChatMessageHistory
-from langchain_core.runnables.history import RunnableWithMessageHistory
 import tiktoken
 from sentence_transformers import SentenceTransformer
 import faiss
@@ -62,8 +58,6 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
     raise RuntimeError("OPENAI_API_KEY is not set in the environment variables.")
 
-# Initialize OpenAI client
-openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
 # Initialize LangChain Chat Model
 chat_model = ChatOpenAI(
@@ -94,20 +88,6 @@ prompt_template = PromptTemplate(
 
 # Chain the PromptTemplate and ChatOpenAI using the `|` operator
 llm_chain = prompt_template | chat_model
-
-# Session store to maintain conversation history
-session_store = {}
-
-def get_session_history(session_id):
-    """
-    Retrieve or initialize the message history for a given session ID.
-    """
-    if session_id not in session_store:
-        logging.debug(f"Creating new session history for session_id: {session_id}")
-        session_store[session_id] = ChatMessageHistory()
-    else:
-        logging.debug(f"Retrieving existing session history for session_id: {session_id}")
-    return session_store[session_id]
 
 
 # Configure logging
@@ -214,24 +194,6 @@ api_ai_doc = """
 class AIRequest(BaseModel):
     question: str
 
-def trim_history(messages, max_tokens=4096):
-    """
-    Trim the conversation history to fit within the token limit.
-    """
-    encoding = tiktoken.encoding_for_model("gpt-4")  # Use the appropriate model
-    trimmed_messages = []
-    total_tokens = 0
-
-    # Reverse the messages to start from the most recent
-    for msg in reversed(messages):
-        # Estimate token count for the message
-        token_count = len(encoding.encode(msg.content)) + 4  # +4 for metadata (role, etc.)
-        if total_tokens + token_count > max_tokens:
-            break
-        trimmed_messages.insert(0, msg)  # Add to the beginning of the list
-        total_tokens += token_count
-
-    return trimmed_messages
 
 # Initialize the embedding model
 embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
@@ -281,9 +243,7 @@ async def ai_endpoint(request: Request, ai_request: AIRequest):
     Handles AI-powered question-answering requests with conversational memory.
     """
     question = ai_request.question.strip()
-    session_id = request.headers.get("X-Session-ID", "default")  # Use a default session if none is provided
-    logging.debug(f"Session ID: {session_id}")
-
+    
     if not question:
         raise HTTPException(status_code=400, detail="The 'question' field cannot be empty.")
 
@@ -291,7 +251,7 @@ async def ai_endpoint(request: Request, ai_request: AIRequest):
         # Store the user's question in the vector store
         store_message(question, "human")
 
-        # Retrieve relevant messages from the vector store (increase top_k if needed)
+        # Retrieve relevant messages from the vector store
         relevant_messages = retrieve_relevant_messages(question, top_k=5)
 
         # Format the retrieved messages for the prompt
