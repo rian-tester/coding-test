@@ -3,6 +3,11 @@ import ReactMarkdown from "react-markdown";
 import Spinner from "./Spinner";
 import styles from "./styles/ChatBot.module.css";
 
+function preprocessMarkdown(content) {
+    // Replace double newlines before numbered list items with a single newline
+    return content.replace(/\n\n(\d+\.)/g, '\n$1');
+}
+
 function MarkdownRenderer({ content }) {
     if (typeof content !== 'string') {
         console.error('Expected string content for MarkdownRenderer, received:', content);
@@ -60,7 +65,7 @@ export default function ChatBot({
               </div>
               <div className={`${styles.bubble} ${styles["ai-bubble"]}`}>
                 <strong>AI Response:</strong>
-                <MarkdownRenderer content={item.answer} />
+                <MarkdownRenderer content={preprocessMarkdown(item.answer)} />
               </div>
             </div>
           ))}
