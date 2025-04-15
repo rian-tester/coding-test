@@ -198,3 +198,99 @@ When testing the application, I recommend:
 
 Thank you for reviewing my submission!  
 I look forward to discussing my implementation choices and technical decisions.
+
+---
+
+# Updates (LangChain Branch)
+
+In this update, I've significantly enhanced the AI capabilities of the application by integrating **LangChain** and implementing **memory features** for more intelligent, context-aware responses.
+
+---
+
+### 🆕 What's New?
+
+#### Architecture Improvements
+
+- **LangChain Integration**  
+  Refactored the backend from direct OpenAI API calls to LangChain's more modular and flexible framework.
+
+- **Vector-Based Memory (RAG)**  
+  Implemented **Retrieval Augmented Generation** using `sentence-transformers` and **FAISS** for efficient long-term memory and conversation history.
+
+- **Token Optimization**  
+  Introduced intelligent token counting and management to avoid hitting API token limits.
+
+- **Enhanced Context Awareness**  
+  The AI now maintains session memory and references past interactions, while still accessing sales rep data when relevant.
+
+---
+
+### 📈 Development Journey
+
+- Started with **direct OpenAI API integration** for basic Q&A functionality  
+- Experimented with **LangChain's RunnableWithMessageHistory** for session memory  
+- Encountered **token limit issues** using plain conversation history  
+- Shifted to **vector-based retrieval (RAG)** using `sentence-transformers` for memory optimization  
+- Fine-tuned history retrieval to ensure **only the most relevant messages are used**
+
+---
+
+### ⚙️ Technical Implementation
+
+- Used `sentence-transformers` to generate **embeddings** for user-AI interactions  
+- Implemented a **FAISS vector store** for fast similarity search  
+- Maintained full compatibility with existing **dummy sales rep data integration**  
+- Optimized token usage with intelligent trimming and batching
+
+---
+
+### 🚀 How to Use This Branch
+
+1. **Switch to the `LangChain` branch**:
+
+    ```bash
+    git checkout langchain
+    ```
+
+2. **Reinstall backend requirements** (new dependencies added):
+
+    ```bash
+    cd backend
+    pip install -r requirements.txt
+    ```
+
+3. **Start both servers** as usual
+
+    ```bash
+    # Backend
+    uvicorn main:app --reload
+
+    # Frontend (in separate terminal)
+    cd frontend
+    npm run dev
+    ```
+
+> ⚠️ **Note:** This feature only works with the latest commit on the `langchain` branch. Make sure you're using the most recent version.
+
+---
+
+### 🧠 Testing the Memory Feature
+
+You can now test the AI's ability to **remember past conversations**:
+
+- Start by saying:
+
+    ```
+    My name is [your name]
+    ```
+
+- Then later ask:
+
+    ```
+    What's my name?
+    ```
+
+The AI should recall your name correctly based on previous context.  
+You can also continue using **sales rep data** keywords and the AI will maintain context intelligently across turns.
+
+---

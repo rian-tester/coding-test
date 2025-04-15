@@ -314,11 +314,6 @@ async def ai_endpoint(request: Request, ai_request: AIRequest):
         logging.error(f"OpenAI API error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to process the AI request. Please try again later.")
 
-@app.get("/api/debug/sessions")
-def debug_sessions():
-    return {session_id: history.messages for session_id, history in session_store.items()}
-
-
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
