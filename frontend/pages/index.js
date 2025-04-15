@@ -56,9 +56,14 @@ export default function Home() {
     if (question.trim() === "") return;
     setLoadingAI(true);
     try {
+      const headers = {
+        "Content-Type": "application/json",
+        "X-Session-ID": "unique-session-id", // Generate or retrieve a session ID
+      };
+
       const response = await fetch("http://localhost:8000/api/ai", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ question }),
       });
       const data = await response.json();

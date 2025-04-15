@@ -11,6 +11,8 @@ import logging
 from pydantic import BaseModel
 from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
+from langchain_community.chat_message_histories import ChatMessageHistory
+from langchain_core.runnables.history import RunnableWithMessageHistory
 
 
 
@@ -63,7 +65,8 @@ openai_client = OpenAI(api_key=OPENAI_API_KEY)
 chat_model = ChatOpenAI(
     model="gpt-4",
     openai_api_key=OPENAI_API_KEY,
-    temperature=0.7
+    temperature=0.7,
+    max_completion_tokens=3000
 )
 
 # Load system instruction from assistant.txt
@@ -74,9 +77,11 @@ def load_system_instruction():
 # Create a LangChain PromptTemplate
 system_instruction = load_system_instruction()
 prompt_template = PromptTemplate(
-    input_variables=["question", "data"],
+    input_variables=["history_messages", "question", "data"],
     template=(
         "{system_instruction}\n\n"
+        "Conversation history:\n"
+        "{history_messages}\n\n"
         "The user asked: {question}\n"
         "Here is the relevant data: {data}\n"
         "Please provide a clean, human-readable, and elaborated response."
@@ -85,6 +90,29 @@ prompt_template = PromptTemplate(
 
 # Chain the PromptTemplate and ChatOpenAI using the `|` operator
 llm_chain = prompt_template | chat_model
+
+# Session store to maintain conversation history
+session_store = {}
+
+def get_session_history(session_id):
+    """
+    Retrieve or initialize the message history for a given session ID.
+    """
+    if session_id not in session_store:
+        logging.debug(f"Creating new session history for session_id: {session_id}")
+        session_store[session_id] = ChatMessageHistory()
+    else:
+        logging.debug(f"Retrieving existing session history for session_id: {session_id}")
+    return session_store[session_id]
+
+
+# Wrap the chain with RunnableWithMessageHistory
+chain_with_message_history = RunnableWithMessageHistory(
+    runnable=llm_chain,  # Corrected argument name
+    get_session_history=get_session_history,
+    input_messages_key="history_messages",  # Key for conversation history
+    history_messages_key="history_messages"  # Key for conversation history
+)
 
 # Configure logging
 logging.basicConfig(
@@ -190,66 +218,78 @@ api_ai_doc = """
 class AIRequest(BaseModel):
     question: str
 
+
 @app.post("/api/ai", summary="AI Question Answering", tags=["AI"], description=api_ai_doc)
-async def ai_endpoint(request: AIRequest):
+async def ai_endpoint(request: Request, ai_request: AIRequest):
     """
-    Handles AI-powered question-answering requests.
+    Handles AI-powered question-answering requests with conversational memory.
     """
-    question = request.question.strip()
+    question = ai_request.question.strip()
+    session_id = request.headers.get("X-Session-ID", "default")  # Use a default session if none is provided
+    logging.debug(f"Session ID: {session_id}")
+
     if not question:
         raise HTTPException(status_code=400, detail="The 'question' field cannot be empty.")
 
     try:
+        # Retrieve the session history
+        history = get_session_history(session_id)
+
+        # Add the user's question to the history
+        logging.debug(f"Adding user message to history: {question}")
+        history.add_user_message(question)
+
+        # Prepare the conversation history for the AI model
+        history_messages = "\n".join(
+            f"{'User' if msg.type == 'human' else 'AI'}: {msg.content}" for msg in history.messages
+        )
+
+        # Prepare the input for the chain
+        input_data = {
+            "history_messages": history_messages,
+            "question": question,
+            "data": "No specific data available.",
+            "system_instruction": system_instruction,
+        }
+
         # Check if the question is related to dummy data
         if is_related_to_dummy_data(question):
             sales_reps = DUMMY_DATA.get("salesReps", [])
             if not sales_reps:
-                return {"answer": "I couldn't find any sales representatives in the dummy data."}
+                response = "I couldn't find any sales representatives in the dummy data."
+            else:
+                # Check for specific sales rep
+                for rep in sales_reps:
+                    if rep.get("name").lower() in question.lower():
+                        input_data["data"] = json.dumps(rep)
+                        break
+                else:
+                    input_data["data"] = json.dumps(sales_reps)
 
-            # Check for specific sales rep
-            for rep in sales_reps:
-                if rep.get("name").lower() in question.lower():
-                    # Generate response using the chain
-                    response = llm_chain.invoke({
-                        "question": question,
-                        "data": json.dumps(rep),
-                        "system_instruction": system_instruction
-                    })
-                    # Ensure response is a string
-                    if hasattr(response, "content"):
-                        response = response.content  # Extract content if it's an AIMessage
-                    elif not isinstance(response, str):
-                        response = json.dumps(response)  # Convert to string if it's not
-                    return {"answer": response}
+        # Invoke the chain with session history
+        response = chain_with_message_history.invoke(
+            input_data,
+            {"configurable": {"session_id": session_id}}
+        )
 
-            # General response for all sales reps
-            response = llm_chain.invoke({
-                "question": question,
-                "data": json.dumps(sales_reps),
-                "system_instruction": system_instruction
-            })
-            # Ensure response is a string
-            if hasattr(response, "content"):
-                response = response.content  # Extract content if it's an AIMessage
-            elif not isinstance(response, str):
-                response = json.dumps(response)  # Convert to string if it's not
-            return {"answer": response}
-        else:
-            # General AI response
-            response = llm_chain.invoke({
-                "question": question,
-                "data": "No specific data available.",
-                "system_instruction": system_instruction
-            })
-            # Ensure response is a string
-            if hasattr(response, "content"):
-                response = response.content  # Extract content if it's an AIMessage
-            elif not isinstance(response, str):
-                response = json.dumps(response)  # Convert to string if it's not
-            return {"answer": response}
+        # Ensure response is a string
+        if hasattr(response, "content"):
+            response = response.content  # Extract content if it's an AIMessage
+        elif not isinstance(response, str):
+            response = json.dumps(response)  # Convert to string if it's not
+
+        # Add the AI's response to the history
+        logging.debug(f"Adding AI response to history: {response}")
+        history.add_ai_message(response)
+
+        return {"answer": response}
     except Exception as e:
-        logging.error(f"OpenAI API error: {e}")
+        logging.error(f"OpenAI API error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to process the AI request. Please try again later.")
+
+@app.get("/api/debug/sessions")
+def debug_sessions():
+    return {session_id: history.messages for session_id, history in session_store.items()}
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
