@@ -13,6 +13,10 @@ from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
+import tiktoken
+from sentence_transformers import SentenceTransformer
+import faiss
+import numpy as np
 
 
 
@@ -66,7 +70,7 @@ chat_model = ChatOpenAI(
     model="gpt-4",
     openai_api_key=OPENAI_API_KEY,
     temperature=0.7,
-    max_completion_tokens=3000
+    max_completion_tokens=1000  # Reduced to leave room for input tokens
 )
 
 # Load system instruction from assistant.txt
@@ -105,14 +109,6 @@ def get_session_history(session_id):
         logging.debug(f"Retrieving existing session history for session_id: {session_id}")
     return session_store[session_id]
 
-
-# Wrap the chain with RunnableWithMessageHistory
-chain_with_message_history = RunnableWithMessageHistory(
-    runnable=llm_chain,  # Corrected argument name
-    get_session_history=get_session_history,
-    input_messages_key="history_messages",  # Key for conversation history
-    history_messages_key="history_messages"  # Key for conversation history
-)
 
 # Configure logging
 logging.basicConfig(
@@ -218,7 +214,67 @@ api_ai_doc = """
 class AIRequest(BaseModel):
     question: str
 
+def trim_history(messages, max_tokens=4096):
+    """
+    Trim the conversation history to fit within the token limit.
+    """
+    encoding = tiktoken.encoding_for_model("gpt-4")  # Use the appropriate model
+    trimmed_messages = []
+    total_tokens = 0
 
+    # Reverse the messages to start from the most recent
+    for msg in reversed(messages):
+        # Estimate token count for the message
+        token_count = len(encoding.encode(msg.content)) + 4  # +4 for metadata (role, etc.)
+        if total_tokens + token_count > max_tokens:
+            break
+        trimmed_messages.insert(0, msg)  # Add to the beginning of the list
+        total_tokens += token_count
+
+    return trimmed_messages
+
+# Initialize the embedding model
+embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+
+# Initialize FAISS index
+dimension = 384  # Dimension of the embeddings from the model
+index = faiss.IndexFlatL2(dimension)
+
+# Store metadata (e.g., message content and type) alongside embeddings
+conversation_metadata = []
+
+def store_message(message, message_type):
+    """
+    Store a message in the vector store with its metadata.
+    """
+    global conversation_metadata
+
+    # Generate embedding for the message
+    embedding = embedding_model.encode([message])
+
+    # Add the embedding to the FAISS index
+    index.add(np.array(embedding, dtype=np.float32))
+
+    # Store metadata
+    conversation_metadata.append({"content": message, "type": message_type})
+
+
+def retrieve_relevant_messages(query, top_k=5):
+    """
+    Retrieve the most relevant messages from the vector store.
+    """
+    # Generate embedding for the query
+    query_embedding = embedding_model.encode([query])
+
+    # Perform similarity search
+    distances, indices = index.search(np.array(query_embedding, dtype=np.float32), top_k)
+
+    # Retrieve the corresponding messages
+    relevant_messages = [conversation_metadata[i] for i in indices[0] if i < len(conversation_metadata)]
+    return relevant_messages
+
+
+# Remove the RunnableWithMessageHistory wrapper and use llm_chain directly
 @app.post("/api/ai", summary="AI Question Answering", tags=["AI"], description=api_ai_doc)
 async def ai_endpoint(request: Request, ai_request: AIRequest):
     """
@@ -232,16 +288,15 @@ async def ai_endpoint(request: Request, ai_request: AIRequest):
         raise HTTPException(status_code=400, detail="The 'question' field cannot be empty.")
 
     try:
-        # Retrieve the session history
-        history = get_session_history(session_id)
+        # Store the user's question in the vector store
+        store_message(question, "human")
 
-        # Add the user's question to the history
-        logging.debug(f"Adding user message to history: {question}")
-        history.add_user_message(question)
+        # Retrieve relevant messages from the vector store (increase top_k if needed)
+        relevant_messages = retrieve_relevant_messages(question, top_k=5)
 
-        # Prepare the conversation history for the AI model
+        # Format the retrieved messages for the prompt
         history_messages = "\n".join(
-            f"{'User' if msg.type == 'human' else 'AI'}: {msg.content}" for msg in history.messages
+            f"{'User' if msg['type'] == 'human' else 'AI'}: {msg['content']}" for msg in relevant_messages
         )
 
         # Prepare the input for the chain
@@ -251,6 +306,22 @@ async def ai_endpoint(request: Request, ai_request: AIRequest):
             "data": "No specific data available.",
             "system_instruction": system_instruction,
         }
+
+        # Add before invoking the LLM chain
+        token_count = len(tiktoken.encoding_for_model("gpt-4").encode(
+            input_data["system_instruction"] + input_data["history_messages"] + input_data["question"] + input_data["data"]))
+        logging.debug(f"Total tokens in request: {token_count}")
+
+        # Add before invoking the LLM chain
+        MAX_ALLOWED_TOKENS = 7000  # Safe limit for GPT-4 (8192 - 1000 completion - buffer)
+
+        if token_count > MAX_ALLOWED_TOKENS:
+            # Reduce the number of history messages
+            relevant_messages = relevant_messages[:3]  # Only use top 3 messages
+            history_messages = "\n".join(
+                f"{'User' if msg['type'] == 'human' else 'AI'}: {msg['content']}" for msg in relevant_messages
+            )
+            input_data["history_messages"] = history_messages
 
         # Check if the question is related to dummy data
         if is_related_to_dummy_data(question):
@@ -266,11 +337,8 @@ async def ai_endpoint(request: Request, ai_request: AIRequest):
                 else:
                     input_data["data"] = json.dumps(sales_reps)
 
-        # Invoke the chain with session history
-        response = chain_with_message_history.invoke(
-            input_data,
-            {"configurable": {"session_id": session_id}}
-        )
+        # Use the llm_chain directly instead of chain_with_message_history
+        response = llm_chain.invoke(input_data)
 
         # Ensure response is a string
         if hasattr(response, "content"):
@@ -278,9 +346,8 @@ async def ai_endpoint(request: Request, ai_request: AIRequest):
         elif not isinstance(response, str):
             response = json.dumps(response)  # Convert to string if it's not
 
-        # Add the AI's response to the history
-        logging.debug(f"Adding AI response to history: {response}")
-        history.add_ai_message(response)
+        # Store the AI's response in the vector store
+        store_message(response, "ai")
 
         return {"answer": response}
     except Exception as e:
@@ -291,5 +358,9 @@ async def ai_endpoint(request: Request, ai_request: AIRequest):
 def debug_sessions():
     return {session_id: history.messages for session_id, history in session_store.items()}
 
+
+
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
+
