@@ -138,7 +138,7 @@ api_sales_reps_doc = """
     ```
     """
 
-@app.get("/api/sales-reps", summary="Get Sales Representatives", tags=["Sales Reps"])
+@app.get("/api/sales-reps", summary="Get Sales Representatives", tags=["Sales Reps"], description=api_sales_reps_doc)
 def get_sales_reps():
     
     return DUMMY_DATA
@@ -190,7 +190,7 @@ api_ai_doc = """
 class AIRequest(BaseModel):
     question: str
 
-@app.post("/api/ai", summary="AI Question Answering", tags=["AI"])
+@app.post("/api/ai", summary="AI Question Answering", tags=["AI"],description=api_ai_doc)
 async def ai_endpoint(request: AIRequest):
     """
     Handles AI-powered question-answering requests.
