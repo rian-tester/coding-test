@@ -9,9 +9,11 @@ import openai
 from openai import OpenAI
 import logging
 from pydantic import BaseModel
+from langchain_openai import ChatOpenAI
+from langchain.prompts import PromptTemplate
 
-# Load environment variables
-load_dotenv()
+
+
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -46,6 +48,9 @@ app.mount("/images", StaticFiles(directory="images"), name="images")
 with open("dummyData.json", "r") as f:
     DUMMY_DATA = json.load(f)
 
+# Load environment variables
+load_dotenv()
+
 # Load OpenAI API key
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
@@ -53,6 +58,33 @@ if not OPENAI_API_KEY:
 
 # Initialize OpenAI client
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
+
+# Initialize LangChain Chat Model
+chat_model = ChatOpenAI(
+    model="gpt-4",
+    openai_api_key=OPENAI_API_KEY,
+    temperature=0.7
+)
+
+# Load system instruction from assistant.txt
+def load_system_instruction():
+    with open("assistant.txt", "r") as f:
+        return f.read().strip()
+
+# Create a LangChain PromptTemplate
+system_instruction = load_system_instruction()
+prompt_template = PromptTemplate(
+    input_variables=["question", "data"],
+    template=(
+        "{system_instruction}\n\n"
+        "The user asked: {question}\n"
+        "Here is the relevant data: {data}\n"
+        "Please provide a clean, human-readable, and elaborated response."
+    )
+)
+
+# Chain the PromptTemplate and ChatOpenAI using the `|` operator
+llm_chain = prompt_template | chat_model
 
 # Configure logging
 logging.basicConfig(
@@ -63,11 +95,6 @@ logging.basicConfig(
         logging.FileHandler("error.log"),  # Logs to a file
     ],
 )
-
-# Load system instruction from a file
-def load_system_instruction():
-    with open("assistant.txt", "r") as f:
-        return f.read().strip()
 
 # Function to check if the question is related to dummy data
 def is_related_to_dummy_data(question):
@@ -86,9 +113,8 @@ def generate_dummy_data_response():
     response += "\n".join([f"- {rep}" for rep in sales_reps])
     return response
 
-@app.get("/api/sales-reps", summary="Get Sales Representatives", tags=["Sales Reps"])
-def get_sales_reps():
-    """
+# Define the sales-rep doc
+api_sales_reps_doc = """
     Retrieve a list of sales representatives and their details.
 
     **Response:**
@@ -111,15 +137,15 @@ def get_sales_reps():
     }
     ```
     """
+
+@app.get("/api/sales-reps", summary="Get Sales Representatives", tags=["Sales Reps"])
+def get_sales_reps():
+    
     return DUMMY_DATA
 
-# Define a Pydantic model for the request body
-class AIRequest(BaseModel):
-    question: str
 
-@app.post("/api/ai", summary="AI Question Answering", tags=["AI"])
-async def ai_endpoint(request: AIRequest):
-    """
+# Define the API doc
+api_ai_doc = """
     Handles AI-powered question-answering requests.
 
     **Request Body:**
@@ -159,6 +185,16 @@ async def ai_endpoint(request: AIRequest):
     }
     ```
     """
+
+# Define a Pydantic model for the request body
+class AIRequest(BaseModel):
+    question: str
+
+@app.post("/api/ai", summary="AI Question Answering", tags=["AI"])
+async def ai_endpoint(request: AIRequest):
+    """
+    Handles AI-powered question-answering requests.
+    """
     question = request.question.strip()
     if not question:
         raise HTTPException(status_code=400, detail="The 'question' field cannot be empty.")
@@ -166,7 +202,6 @@ async def ai_endpoint(request: AIRequest):
     try:
         # Check if the question is related to dummy data
         if is_related_to_dummy_data(question):
-            system_instruction = load_system_instruction()
             sales_reps = DUMMY_DATA.get("salesReps", [])
             if not sales_reps:
                 return {"answer": "I couldn't find any sales representatives in the dummy data."}
@@ -174,55 +209,32 @@ async def ai_endpoint(request: AIRequest):
             # Check for specific sales rep
             for rep in sales_reps:
                 if rep.get("name").lower() in question.lower():
-                    gpt_prompt = (
-                        f"The user asked: {question}. Here is the sales representative data for {rep.get('name')}: {json.dumps(rep)}. "
-                        f"Please provide a clean, human-readable, and elaborated response."
-                    )
-                    gpt_response = openai_client.chat.completions.create(
-                        model="gpt-4o",
-                        messages=[
-                            {"role": "system", "content": system_instruction},
-                            {"role": "user", "content": gpt_prompt},
-                        ],
-                        max_tokens=2000,
-                        temperature=0.7,
-                    )
-                    return {"answer": gpt_response.choices[0].message.content.strip()}
+                    # Generate response using the chain
+                    response = llm_chain.invoke({
+                        "question": question,
+                        "data": json.dumps(rep),
+                        "system_instruction": system_instruction
+                    })
+                    return {"answer": response}
 
             # General response for all sales reps
-            gpt_prompt = (
-                f"The user asked: {question}. Here is the sales representative data: {json.dumps(sales_reps)}. "
-                f"Please provide a clean, human-readable, and elaborated response."
-            )
-            gpt_response = openai_client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
-                    {"role": "system", "content": system_instruction},
-                    {"role": "user", "content": gpt_prompt},
-                ],
-                max_tokens=2000,
-                temperature=0.7,
-            )
-            return {"answer": gpt_response.choices[0].message.content.strip()}
+            response = llm_chain.invoke({
+                "question": question,
+                "data": json.dumps(sales_reps),
+                "system_instruction": system_instruction
+            })
+            return {"answer": response}
         else:
             # General AI response
-            system_instruction = load_system_instruction()
-            gpt_response = openai_client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
-                    {"role": "system", "content": system_instruction},
-                    {"role": "user", "content": question},
-                ],
-                max_tokens=2000,
-                temperature=0.7,
-            )
-            return {"answer": gpt_response.choices[0].message.content.strip()}
+            response = llm_chain.invoke({
+                "question": question,
+                "data": "No specific data available.",
+                "system_instruction": system_instruction
+            })
+            return {"answer": response}
     except Exception as e:
         logging.error(f"OpenAI API error: {e}")
         raise HTTPException(status_code=500, detail="Failed to process the AI request. Please try again later.")
-    except Exception as e:
-        logging.error(f"Unexpected error: {e}")
-        raise HTTPException(status_code=500, detail="An unexpected error occurred. Please try again later.")
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
