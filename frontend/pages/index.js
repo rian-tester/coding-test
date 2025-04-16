@@ -118,7 +118,7 @@ export default function Home() {
           <main className={`main-content ${isDocked ? "expanded" : ""}`}>
             {/* Dummy Data Section */}
             {activeSection === "dummy-data" && (
-              <>
+              <div className="dummy-section-wrapper">
                 <h2 className="section-header blue">Dummy Data</h2>
                 {loading ? (
                   <Spinner />
@@ -129,22 +129,14 @@ export default function Home() {
                     ))}
                   </ul>
                 )}
-              </>
+              </div>
             )}
 
             {/* AI Section */}
             {activeSection === "ai-section" && (
-              <>
+              <div className="ai-section-wrapper">
                 <h2 className="section-header blue">Ask a Question</h2>
-                <div
-                  className="no-scroll"
-                  style={{
-                    height: "calc(100vh - 180px)",
-                    minHeight: 0,
-                    display: "flex",
-                    flexDirection: "column"
-                  }}
-                >
+                <div style={{ height: "100%", minHeight: 0, display: "flex", flexDirection: "column" }}>
                   <ChatBot
                     question={question}
                     setQuestion={setQuestion}
@@ -155,7 +147,7 @@ export default function Home() {
                     handleKeyDown={handleKeyDown}
                   />
                 </div>
-              </>
+              </div>
             )}
           </main>
         </div>

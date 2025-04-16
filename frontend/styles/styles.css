@@ -85,10 +85,23 @@ body {
 .main-content {
   flex: 1 1; /* Take up remaining horizontal space */
   padding: 2rem;
-  overflow-y: auto; /* Allow vertical scrolling for main content */
   overflow-x: hidden; /* Prevent horizontal scrolling */
   box-sizing: border-box; /* Include padding in width calculations */
   height: calc(100vh - 4rem); /* Adjust height to fit within the viewport */
+}
+
+/* Dummy section scrolls */
+.dummy-section-wrapper {
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* AI section does NOT scroll */
+.ai-section-wrapper {
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Prevent scrolling for AI section */

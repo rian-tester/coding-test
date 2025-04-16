@@ -41,12 +41,13 @@ export default function ChatBot({
           <div className={styles["response-history"]}>
             {answerHistory.slice().reverse().map((item, index) => (
               <div key={index} className={styles["response-item"]}>
-                <div className={`${styles.bubble} ${styles["user-bubble"]}`}>
-                  <strong>Question:</strong> {item.question}
-                </div>
                 <div className={`${styles.bubble} ${styles["ai-bubble"]}`}>
                   <strong>AI Response:</strong>
                   <MarkdownRenderer content={preprocessMarkdown(item.answer)} />
+                </div>
+                <div className={`${styles.bubble} ${styles["user-bubble"]}`}>
+                  <strong>Question:</strong>
+                  <div className={styles["question-text"]}>{item.question}</div>
                 </div>
               </div>
             ))}

@@ -20,7 +20,7 @@
   flex: 1 1 0%; /* Takes all available space */
   min-height: 0;
   overflow-y: auto; /* Enable vertical scrolling */
-  padding: 1rem;
+  padding: 1rem 2rem; /* Add left and right padding */
   background-color: rgba(0, 0, 0, 0.25);
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -46,7 +46,7 @@
   bottom: 0;
   z-index: 2;
   background-color: rgba(255, 255, 255, 0.1);
-  padding: 1rem;
+  padding: 1rem 2rem; /* Add left and right padding */
   border-top: 1px solid #4a90e2;
   border-radius: 10px;
   display: flex;
@@ -212,4 +212,9 @@
 .bubble .markdown h2 + p,
 .bubble .markdown h3 + p {
   margin-top: 0.1rem;
+}
+
+.question-text {
+  margin-top: 0.75em; /* Match markdown spacing */
+  white-space: pre-line; /* Respect line breaks in user question */
 }
