@@ -91,6 +91,11 @@ body {
   height: calc(100vh - 4rem); /* Adjust height to fit within the viewport */
 }
 
+/* Prevent scrolling for AI section */
+.main-content .no-scroll {
+  overflow: hidden !important;
+}
+
 /* Title Animation */
 @keyframes fadeIn {
   from {

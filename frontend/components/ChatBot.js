@@ -39,7 +39,7 @@ export default function ChatBot({
           </div>
         ) : (
           <div className={styles["response-history"]}>
-            {answerHistory.map((item, index) => (
+            {answerHistory.slice().reverse().map((item, index) => (
               <div key={index} className={styles["response-item"]}>
                 <div className={`${styles.bubble} ${styles["user-bubble"]}`}>
                   <strong>Question:</strong> {item.question}

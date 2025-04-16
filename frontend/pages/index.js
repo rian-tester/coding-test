@@ -136,7 +136,15 @@ export default function Home() {
             {activeSection === "ai-section" && (
               <>
                 <h2 className="section-header blue">Ask a Question</h2>
-                <div style={{ height: "calc(100vh - 180px)", minHeight: 0, display: "flex", flexDirection: "column" }}>
+                <div
+                  className="no-scroll"
+                  style={{
+                    height: "calc(100vh - 180px)",
+                    minHeight: 0,
+                    display: "flex",
+                    flexDirection: "column"
+                  }}
+                >
                   <ChatBot
                     question={question}
                     setQuestion={setQuestion}
