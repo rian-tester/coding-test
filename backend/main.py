@@ -315,15 +315,39 @@ def retrieve_relevant_messages(query, top_k=5):
     """
     Retrieve the most relevant messages from the vector store.
     """
-    # Generate embedding for the query
-    query_embedding = embedding_model.encode([query])
+    # Safety checks first
+    if len(conversation_metadata) == 0:
+        return []
+    
+    if index.ntotal == 0:
+        return []
+    
+    # Limit top_k to available data
+    actual_top_k = min(top_k, len(conversation_metadata), index.ntotal)
+    
+    try:
+        # Generate embedding for the query
+        query_embedding = embedding_model.encode([query])
 
-    # Perform similarity search
-    distances, indices = index.search(np.array(query_embedding, dtype=np.float32), top_k)
-
-    # Retrieve the corresponding messages
-    relevant_messages = [conversation_metadata[i] for i in indices[0] if i < len(conversation_metadata)]
-    return relevant_messages
+        # Perform similarity search
+        distances, indices = index.search(np.array(query_embedding, dtype=np.float32), actual_top_k)
+        
+        # FIXED: More robust index checking
+        relevant_messages = []
+        if len(indices) > 0 and len(indices[0]) > 0:
+            for i in indices[0]:
+                # Double-check bounds
+                if isinstance(i, (int, np.integer)) and 0 <= i < len(conversation_metadata):
+                    relevant_messages.append(conversation_metadata[i])
+                else:
+                    logging.warning(f"Invalid index {i}, metadata length: {len(conversation_metadata)}")
+        
+        return relevant_messages
+        
+    except Exception as e:
+        logging.error(f"Error in retrieve_relevant_messages: {e}")
+        # Return empty list instead of crashing
+        return []
 
 def needs_conversation_context(question: str) -> bool:
     """Determine if question needs conversation history"""
@@ -447,7 +471,11 @@ async def ai_endpoint(request: Request, ai_request: AIRequest):
             # PATH 3: CONTEXTUAL GENERAL (needs conversation history)
             
             # Retrieve history synchronously (needed for context)
-            relevant_messages = retrieve_relevant_messages(question, top_k=3)
+            try:
+                relevant_messages = retrieve_relevant_messages(question, top_k=3)
+            except Exception as e:
+                logging.error(f"Failed to retrieve conversation history: {e}")
+                relevant_messages = []  # Continue without history
             
             history_messages = "\n".join(
                 f"{'User' if msg['type'] == 'human' else 'AI'}: {msg['content']}" for msg in relevant_messages
