@@ -14,6 +14,8 @@ from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
 from functools import lru_cache
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -111,6 +113,8 @@ sales_rep_chunks = []
 sales_rep_index = None
 sales_rep_metadata = []
 sales_rep_cache = {}
+executor = ThreadPoolExecutor(max_workers=2)
+token_cache = {}
 
 def create_sales_rep_chunks():
     """Create searchable text chunks from sales rep data - runs once on startup"""
@@ -160,14 +164,14 @@ def initialize_sales_rep_search():
         faiss.normalize_L2(embeddings)
         sales_rep_index.add(embeddings.astype('float32'))
 
-@lru_cache(maxsize=50)
-def search_sales_rep_data(question: str, top_k: int = 3) -> str:
-    """Search for relevant sales rep information using semantic similarity"""
+@lru_cache(maxsize=100)
+def search_sales_rep_data_fast(question: str, top_k: int = 2) -> str:
+    """Faster version with reduced top_k and better caching"""
     if sales_rep_index is None or not sales_rep_chunks:
-        return json.dumps(DUMMY_DATA.get("salesReps", []))
+        return json.dumps(DUMMY_DATA.get("salesReps", [])[:2])  # Limit fallback data
     
     # Check cache first
-    cache_key = f"{question.lower().strip()}_{top_k}"
+    cache_key = f"{question.lower().strip()}"
     if cache_key in sales_rep_cache:
         return sales_rep_cache[cache_key]
     
@@ -175,24 +179,22 @@ def search_sales_rep_data(question: str, top_k: int = 3) -> str:
     query_embedding = embedding_model.encode([question])
     faiss.normalize_L2(query_embedding)
     
-    # Search for similar chunks
+    # Search for similar chunks (reduced top_k for speed)
     scores, indices = sales_rep_index.search(query_embedding.astype('float32'), top_k)
     
-    # Collect relevant information
+    # Collect relevant information (simplified)
     relevant_info = []
-    seen_reps = set()
     
     for i, idx in enumerate(indices[0]):
-        if scores[0][i] > 0.2:  # Similarity threshold
+        if scores[0][i] > 0.25:  # Slightly higher threshold
             chunk = sales_rep_chunks[idx]
             metadata = sales_rep_metadata[idx]
-            rep_name = metadata["rep_name"]
+            relevant_info.append(f"{chunk}")  # Simplified format
             
-            if rep_name not in seen_reps:
-                seen_reps.add(rep_name)
-                relevant_info.append(f"[{metadata['type'].upper()}] {chunk}")
+            if len(relevant_info) >= 2:  # Limit results for speed
+                break
     
-    result = "\n".join(relevant_info) if relevant_info else json.dumps(DUMMY_DATA.get("salesReps", []))
+    result = "\n".join(relevant_info) if relevant_info else "Limited sales rep data available."
     
     # Cache the result
     sales_rep_cache[cache_key] = result
@@ -327,7 +329,7 @@ def retrieve_relevant_messages(query, top_k=5):
 @app.post("/api/ai", summary="AI Question Answering", tags=["AI"], description=api_ai_doc)
 async def ai_endpoint(request: Request, ai_request: AIRequest):
     """
-    Handles AI-powered question-answering requests with conversational memory.
+    Optimized AI endpoint with faster processing for sales rep queries
     """
     question = ai_request.question.strip()
     
@@ -335,61 +337,89 @@ async def ai_endpoint(request: Request, ai_request: AIRequest):
         raise HTTPException(status_code=400, detail="The 'question' field cannot be empty.")
 
     try:
-        # Store the user's question in the vector store
-        store_message(question, "human")
-
-        # Retrieve relevant messages from the vector store
-        relevant_messages = retrieve_relevant_messages(question, top_k=5)
-
-        # Format the retrieved messages for the prompt
-        history_messages = "\n".join(
-            f"{'User' if msg['type'] == 'human' else 'AI'}: {msg['content']}" for msg in relevant_messages
-        )
-
-        # Prepare the input for the chain
-        input_data = {
-            "history_messages": history_messages,
-            "question": question,
-            "data": "No specific data available.",
-            "system_instruction": system_instruction,
-        }
-
-        # Check if the question is related to dummy data
-        if is_related_to_dummy_data(question):
-            # Use optimized semantic search instead of loading all data
-            input_data["data"] = search_sales_rep_data(question)
-
-        # Add before invoking the LLM chain
-        token_count = len(tiktoken.encoding_for_model("gpt-4").encode(
-            input_data["system_instruction"] + input_data["history_messages"] + input_data["question"] + input_data["data"]))
-        logging.debug(f"Total tokens in request: {token_count}")
-
-        # Add before invoking the LLM chain
-        MAX_ALLOWED_TOKENS = 7000  # Safe limit for GPT-4 (8192 - 1000 completion - buffer)
-
-        if token_count > MAX_ALLOWED_TOKENS:
-            # Reduce the number of history messages
-            relevant_messages = relevant_messages[:3]  # Only use top 3 messages
+        # Check if it's a sales rep question first (before storing)
+        is_sales_question = is_related_to_dummy_data(question)
+        
+        if is_sales_question:
+            # FAST PATH for sales rep questions
+            
+            # Skip conversation history for sales queries (major speedup)
+            history_messages = ""
+            
+            # Use fast search
+            sales_data = search_sales_rep_data_fast(question, top_k=2)
+            
+            # Use GPT-3.5-turbo for sales queries (faster)
+            fast_chat_model = ChatOpenAI(
+                model="gpt-3.5-turbo",
+                openai_api_key=OPENAI_API_KEY,
+                temperature=0.3,  # Lower temperature for factual queries
+                max_completion_tokens=500  # Shorter responses for speed
+            )
+            
+            # Simplified prompt for sales queries
+            sales_prompt = PromptTemplate(
+                input_variables=["question", "data"],
+                template=(
+                    "You are a sales data assistant. Answer the question using the provided sales data.\n\n"
+                    "Sales Data:\n{data}\n\n"
+                    "Question: {question}\n\n"
+                    "Provide a concise, accurate answer:"
+                )
+            )
+            
+            fast_chain = sales_prompt | fast_chat_model
+            
+            # Fast token check (estimated)
+            estimated_tokens = len(sales_data + question) // 4  # Roughly 4 chars = 1 token
+            if estimated_tokens > 3000:  # Conservative limit for fast response
+                sales_data = sales_data[:1000]  # Truncate if too long
+            
+            response = fast_chain.invoke({
+                "question": question,
+                "data": sales_data
+            })
+            
+        else:
+            # STANDARD PATH for general questions (existing logic)
+            
+            # Store the user's question
+            store_message(question, "human")
+            
+            # Retrieve relevant messages (only for general questions)
+            relevant_messages = retrieve_relevant_messages(question, top_k=3)  # Reduced from 5
+            
+            # Format the retrieved messages
             history_messages = "\n".join(
                 f"{'User' if msg['type'] == 'human' else 'AI'}: {msg['content']}" for msg in relevant_messages
             )
-            input_data["history_messages"] = history_messages
-
-        # Use the llm_chain directly instead of chain_with_message_history
-        response = llm_chain.invoke(input_data)
-
-        # Ensure response is a string
+            
+            # Prepare input
+            input_data = {
+                "history_messages": history_messages,
+                "question": question,
+                "data": "No specific data available.",
+                "system_instruction": system_instruction,
+            }
+            
+            # Use standard chain for general questions
+            response = llm_chain.invoke(input_data)
+        
+        # Handle response format
         if hasattr(response, "content"):
-            response = response.content  # Extract content if it's AIMessage
+            response_text = response.content
         elif not isinstance(response, str):
-            response = json.dumps(response)  # Convert to string if it's not
-
-        # Store the AI's response in the vector store
-        store_message(response, "ai")
-
-        return {"answer": response}
+            response_text = json.dumps(response)
+        else:
+            response_text = response
+        
+        # Store AI response (for both paths)
+        store_message(response_text, "ai")
+        
+        return {"answer": response_text}
+        
     except Exception as e:
-        logging.error(f"OpenAI API error: {e}", exc_info=True)
+        logging.error(f"AI API error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to process the AI request. Please try again later.")
 
 if __name__ == "__main__":
