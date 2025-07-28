@@ -325,11 +325,41 @@ def retrieve_relevant_messages(query, top_k=5):
     relevant_messages = [conversation_metadata[i] for i in indices[0] if i < len(conversation_metadata)]
     return relevant_messages
 
+def needs_conversation_context(question: str) -> bool:
+    """Determine if question needs conversation history"""
+    context_indicators = [
+        "previous", "earlier", "before", "that", "this", "it", "them", "they",
+        "what did", "as mentioned", "continue", "elaborate", "more about",
+        "follow up", "regarding our", "about what we", "you said", "tell me more"
+    ]
+    return any(indicator in question.lower() for indicator in context_indicators)
+
+def is_simple_factual_question(question: str) -> bool:
+    """Detect simple factual questions that don't need history"""
+    factual_patterns = [
+        "what is", "who is", "how to", "explain", "define", "tell me about",
+        "what are", "how does", "why does", "when was", "where is", "how do"
+    ]
+    question_lower = question.lower()
+    return (any(pattern in question_lower for pattern in factual_patterns) 
+            and len(question.split()) < 15 
+            and not needs_conversation_context(question))
+
+async def store_conversation_async(question: str, response: str):
+    """Store conversation in background after response is sent"""
+    try:
+        # Run in thread pool to avoid blocking
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(executor, store_message, question, "human")
+        await loop.run_in_executor(executor, store_message, response, "ai")
+    except Exception as e:
+        logging.error(f"Background storage error: {e}")
+
 # Remove the RunnableWithMessageHistory wrapper and use llm_chain directly
 @app.post("/api/ai", summary="AI Question Answering", tags=["AI"], description=api_ai_doc)
 async def ai_endpoint(request: Request, ai_request: AIRequest):
     """
-    Optimized AI endpoint with faster processing for sales rep queries
+    Tri-path optimized AI endpoint with async background storage
     """
     question = ai_request.question.strip()
     
@@ -337,27 +367,22 @@ async def ai_endpoint(request: Request, ai_request: AIRequest):
         raise HTTPException(status_code=400, detail="The 'question' field cannot be empty.")
 
     try:
-        # Check if it's a sales rep question first (before storing)
+        # Smart routing
         is_sales_question = is_related_to_dummy_data(question)
+        needs_context = needs_conversation_context(question)
+        is_simple_factual = is_simple_factual_question(question)
         
         if is_sales_question:
-            # FAST PATH for sales rep questions
-            
-            # Skip conversation history for sales queries (major speedup)
-            history_messages = ""
-            
-            # Use fast search
+            # PATH 1: SALES QUERIES (semantic search on sales data)
             sales_data = search_sales_rep_data_fast(question, top_k=2)
             
-            # Use GPT-3.5-turbo for sales queries (faster)
             fast_chat_model = ChatOpenAI(
                 model="gpt-3.5-turbo",
                 openai_api_key=OPENAI_API_KEY,
-                temperature=0.3,  # Lower temperature for factual queries
-                max_completion_tokens=500  # Shorter responses for speed
+                temperature=0.3,
+                max_completion_tokens=500
             )
             
-            # Simplified prompt for sales queries
             sales_prompt = PromptTemplate(
                 input_variables=["question", "data"],
                 template=(
@@ -370,31 +395,86 @@ async def ai_endpoint(request: Request, ai_request: AIRequest):
             
             fast_chain = sales_prompt | fast_chat_model
             
-            # Fast token check (estimated)
-            estimated_tokens = len(sales_data + question) // 4  # Roughly 4 chars = 1 token
-            if estimated_tokens > 3000:  # Conservative limit for fast response
-                sales_data = sales_data[:1000]  # Truncate if too long
+            # Token optimization
+            estimated_tokens = len(sales_data + question) // 4
+            if estimated_tokens > 3000:
+                sales_data = sales_data[:1000]
             
             response = fast_chain.invoke({
                 "question": question,
                 "data": sales_data
             })
             
+            # Store in background after response
+            response_text = response.content if hasattr(response, "content") else str(response)
+            
+            # Send response immediately
+            response_data = {"answer": response_text}
+            
+            # Store conversation in background (non-blocking)
+            asyncio.create_task(store_conversation_async(question, response_text))
+            
+            return response_data
+            
+        elif is_simple_factual and not needs_context:
+            # PATH 2: SIMPLE GENERAL (no history, no storage)
+            
+            simple_chat_model = ChatOpenAI(
+                model="gpt-3.5-turbo",
+                openai_api_key=OPENAI_API_KEY,
+                temperature=0.7,
+                max_completion_tokens=800
+            )
+            
+            simple_prompt = PromptTemplate(
+                input_variables=["question"],
+                template=(
+                    "You are a helpful AI assistant. Provide a clear, informative answer.\n\n"
+                    "Question: {question}\n\n"
+                    "Answer:"
+                )
+            )
+            
+            simple_chain = simple_prompt | simple_chat_model
+            response = simple_chain.invoke({"question": question})
+            
+            response_text = response.content if hasattr(response, "content") else str(response)
+            
+            # For simple factual questions, don't store at all (saves time and space)
+            return {"answer": response_text}
+            
         else:
-            # STANDARD PATH for general questions (existing logic)
+            # PATH 3: CONTEXTUAL GENERAL (needs conversation history)
             
-            # Store the user's question
-            store_message(question, "human")
+            # Retrieve history synchronously (needed for context)
+            relevant_messages = retrieve_relevant_messages(question, top_k=3)
             
-            # Retrieve relevant messages (only for general questions)
-            relevant_messages = retrieve_relevant_messages(question, top_k=3)  # Reduced from 5
-            
-            # Format the retrieved messages
             history_messages = "\n".join(
                 f"{'User' if msg['type'] == 'human' else 'AI'}: {msg['content']}" for msg in relevant_messages
             )
             
-            # Prepare input
+            # Use GPT-3.5-turbo for speed
+            contextual_chat_model = ChatOpenAI(
+                model="gpt-3.5-turbo",  # Faster than GPT-4
+                openai_api_key=OPENAI_API_KEY,
+                temperature=0.7,
+                max_completion_tokens=1000
+            )
+            
+            contextual_prompt = PromptTemplate(
+                input_variables=["history_messages", "question", "data", "system_instruction"],
+                template=(
+                    "{system_instruction}\n\n"
+                    "Conversation history:\n"
+                    "{history_messages}\n\n"
+                    "The user asked: {question}\n"
+                    "Here is the relevant data: {data}\n"
+                    "Please provide a clean, human-readable, and elaborated response."
+                )
+            )
+            
+            contextual_chain = contextual_prompt | contextual_chat_model
+            
             input_data = {
                 "history_messages": history_messages,
                 "question": question,
@@ -402,21 +482,16 @@ async def ai_endpoint(request: Request, ai_request: AIRequest):
                 "system_instruction": system_instruction,
             }
             
-            # Use standard chain for general questions
-            response = llm_chain.invoke(input_data)
-        
-        # Handle response format
-        if hasattr(response, "content"):
-            response_text = response.content
-        elif not isinstance(response, str):
-            response_text = json.dumps(response)
-        else:
-            response_text = response
-        
-        # Store AI response (for both paths)
-        store_message(response_text, "ai")
-        
-        return {"answer": response_text}
+            response = contextual_chain.invoke(input_data)
+            response_text = response.content if hasattr(response, "content") else str(response)
+            
+            # Send response immediately
+            response_data = {"answer": response_text}
+            
+            # Store conversation in background (non-blocking)
+            asyncio.create_task(store_conversation_async(question, response_text))
+            
+            return response_data
         
     except Exception as e:
         logging.error(f"AI API error: {e}", exc_info=True)

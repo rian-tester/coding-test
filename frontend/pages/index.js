@@ -105,7 +105,7 @@ export default function Home() {
 
       <div className="layout">
         <div className="title-bar">
-          <h1>InterOpera Coding Test</h1>
+          <h1>Demo Database AI enhanced Web App</h1>
         </div>
 
         <div className="content-wrapper">
