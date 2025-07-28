@@ -13,9 +13,9 @@ import tiktoken
 from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
-
-
-
+from functools import lru_cache
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -58,7 +58,6 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
     raise RuntimeError("OPENAI_API_KEY is not set in the environment variables.")
 
-
 # Initialize LangChain Chat Model
 chat_model = ChatOpenAI(
     model="gpt-4",
@@ -89,7 +88,6 @@ prompt_template = PromptTemplate(
 # Chain the PromptTemplate and ChatOpenAI using the `|` operator
 llm_chain = prompt_template | chat_model
 
-
 # Configure logging
 logging.basicConfig(
     level=logging.ERROR,
@@ -100,11 +98,117 @@ logging.basicConfig(
     ],
 )
 
+# Initialize the embedding model
+embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+
+# Initialize FAISS index for conversation history
+dimension = 384  # Dimension of the embeddings from the model
+index = faiss.IndexFlatL2(dimension)
+
+# Store metadata (e.g., message content and type) alongside embeddings
+conversation_metadata = []
+
+# NEW: Sales Rep Optimization Variables
+sales_rep_chunks = []
+sales_rep_index = None
+sales_rep_metadata = []
+sales_rep_cache = {}
+executor = ThreadPoolExecutor(max_workers=2)
+token_cache = {}
+
+def create_sales_rep_chunks():
+    """Create searchable text chunks from sales rep data - runs once on startup"""
+    global sales_rep_chunks, sales_rep_metadata
+    
+    chunks = []
+    metadata = []
+    
+    for rep in DUMMY_DATA.get("salesReps", []):
+        # Profile chunk
+        profile_text = f"Sales Rep: {rep['name']}, Role: {rep['role']}, Region: {rep['region']}, Skills: {', '.join(rep['skills'])}"
+        chunks.append(profile_text)
+        metadata.append({"type": "profile", "rep_id": rep["id"], "rep_name": rep["name"]})
+        
+        # Deals chunk
+        if rep.get("deals"):
+            deals_text = f"{rep['name']} deals: "
+            for deal in rep["deals"]:
+                deals_text += f"Client {deal['client']} - ${deal['value']} - {deal['status']}; "
+            chunks.append(deals_text)
+            metadata.append({"type": "deals", "rep_id": rep["id"], "rep_name": rep["name"]})
+        
+        # Clients chunk
+        if rep.get("clients"):
+            clients_text = f"{rep['name']} clients: "
+            for client in rep["clients"]:
+                clients_text += f"{client['name']} ({client['industry']}) - {client['contact']}; "
+            chunks.append(clients_text)
+            metadata.append({"type": "clients", "rep_id": rep["id"], "rep_name": rep["name"]})
+    
+    return chunks, metadata
+
+def initialize_sales_rep_search():
+    """Initialize FAISS index for sales rep data - runs once on startup"""
+    global sales_rep_chunks, sales_rep_index, sales_rep_metadata
+    
+    sales_rep_chunks, sales_rep_metadata = create_sales_rep_chunks()
+    
+    if sales_rep_chunks:
+        # Create embeddings
+        embeddings = embedding_model.encode(sales_rep_chunks)
+        
+        # Initialize FAISS index for sales rep data
+        sales_rep_index = faiss.IndexFlatIP(dimension)
+        
+        # Normalize embeddings for cosine similarity
+        faiss.normalize_L2(embeddings)
+        sales_rep_index.add(embeddings.astype('float32'))
+
+@lru_cache(maxsize=100)
+def search_sales_rep_data_fast(question: str, top_k: int = 2) -> str:
+    """Faster version with reduced top_k and better caching"""
+    if sales_rep_index is None or not sales_rep_chunks:
+        return json.dumps(DUMMY_DATA.get("salesReps", [])[:2])  # Limit fallback data
+    
+    # Check cache first
+    cache_key = f"{question.lower().strip()}"
+    if cache_key in sales_rep_cache:
+        return sales_rep_cache[cache_key]
+    
+    # Create query embedding
+    query_embedding = embedding_model.encode([question])
+    faiss.normalize_L2(query_embedding)
+    
+    # Search for similar chunks (reduced top_k for speed)
+    scores, indices = sales_rep_index.search(query_embedding.astype('float32'), top_k)
+    
+    # Collect relevant information (simplified)
+    relevant_info = []
+    
+    for i, idx in enumerate(indices[0]):
+        if scores[0][i] > 0.25:  # Slightly higher threshold
+            chunk = sales_rep_chunks[idx]
+            metadata = sales_rep_metadata[idx]
+            relevant_info.append(f"{chunk}")  # Simplified format
+            
+            if len(relevant_info) >= 2:  # Limit results for speed
+                break
+    
+    result = "\n".join(relevant_info) if relevant_info else "Limited sales rep data available."
+    
+    # Cache the result
+    sales_rep_cache[cache_key] = result
+    return result
+
+# Initialize sales rep search on startup
+initialize_sales_rep_search()
+
 # Function to check if the question is related to dummy data
 def is_related_to_dummy_data(question):
     keywords = [
         "sales reps", "sales representatives", "dummy data", "sales team",
-        "salesperson", "sales rep", "sales executive", "sales manager"
+        "salesperson", "sales rep", "sales executive", "sales manager",
+        "alice", "bob", "charlie", "dana", "deals", "clients", "performance"
     ]
     return any(keyword in question.lower() for keyword in keywords)
 
@@ -144,9 +248,7 @@ api_sales_reps_doc = """
 
 @app.get("/api/sales-reps", summary="Get Sales Representatives", tags=["Sales Reps"], description=api_sales_reps_doc)
 def get_sales_reps():
-    
     return DUMMY_DATA
-
 
 # Define the API doc
 api_ai_doc = """
@@ -194,17 +296,6 @@ api_ai_doc = """
 class AIRequest(BaseModel):
     question: str
 
-
-# Initialize the embedding model
-embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
-
-# Initialize FAISS index
-dimension = 384  # Dimension of the embeddings from the model
-index = faiss.IndexFlatL2(dimension)
-
-# Store metadata (e.g., message content and type) alongside embeddings
-conversation_metadata = []
-
 def store_message(message, message_type):
     """
     Store a message in the vector store with its metadata.
@@ -220,27 +311,79 @@ def store_message(message, message_type):
     # Store metadata
     conversation_metadata.append({"content": message, "type": message_type})
 
-
 def retrieve_relevant_messages(query, top_k=5):
     """
     Retrieve the most relevant messages from the vector store.
     """
-    # Generate embedding for the query
-    query_embedding = embedding_model.encode([query])
+    # Safety checks first
+    if len(conversation_metadata) == 0:
+        return []
+    
+    if index.ntotal == 0:
+        return []
+    
+    # Limit top_k to available data
+    actual_top_k = min(top_k, len(conversation_metadata), index.ntotal)
+    
+    try:
+        # Generate embedding for the query
+        query_embedding = embedding_model.encode([query])
 
-    # Perform similarity search
-    distances, indices = index.search(np.array(query_embedding, dtype=np.float32), top_k)
+        # Perform similarity search
+        distances, indices = index.search(np.array(query_embedding, dtype=np.float32), actual_top_k)
+        
+        # FIXED: More robust index checking
+        relevant_messages = []
+        if len(indices) > 0 and len(indices[0]) > 0:
+            for i in indices[0]:
+                # Double-check bounds
+                if isinstance(i, (int, np.integer)) and 0 <= i < len(conversation_metadata):
+                    relevant_messages.append(conversation_metadata[i])
+                else:
+                    logging.warning(f"Invalid index {i}, metadata length: {len(conversation_metadata)}")
+        
+        return relevant_messages
+        
+    except Exception as e:
+        logging.error(f"Error in retrieve_relevant_messages: {e}")
+        # Return empty list instead of crashing
+        return []
 
-    # Retrieve the corresponding messages
-    relevant_messages = [conversation_metadata[i] for i in indices[0] if i < len(conversation_metadata)]
-    return relevant_messages
+def needs_conversation_context(question: str) -> bool:
+    """Determine if question needs conversation history"""
+    context_indicators = [
+        "previous", "earlier", "before", "that", "this", "it", "them", "they",
+        "what did", "as mentioned", "continue", "elaborate", "more about",
+        "follow up", "regarding our", "about what we", "you said", "tell me more"
+    ]
+    return any(indicator in question.lower() for indicator in context_indicators)
 
+def is_simple_factual_question(question: str) -> bool:
+    """Detect simple factual questions that don't need history"""
+    factual_patterns = [
+        "what is", "who is", "how to", "explain", "define", "tell me about",
+        "what are", "how does", "why does", "when was", "where is", "how do"
+    ]
+    question_lower = question.lower()
+    return (any(pattern in question_lower for pattern in factual_patterns) 
+            and len(question.split()) < 15 
+            and not needs_conversation_context(question))
+
+async def store_conversation_async(question: str, response: str):
+    """Store conversation in background after response is sent"""
+    try:
+        # Run in thread pool to avoid blocking
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(executor, store_message, question, "human")
+        await loop.run_in_executor(executor, store_message, response, "ai")
+    except Exception as e:
+        logging.error(f"Background storage error: {e}")
 
 # Remove the RunnableWithMessageHistory wrapper and use llm_chain directly
 @app.post("/api/ai", summary="AI Question Answering", tags=["AI"], description=api_ai_doc)
 async def ai_endpoint(request: Request, ai_request: AIRequest):
     """
-    Handles AI-powered question-answering requests with conversational memory.
+    Tri-path optimized AI endpoint with async background storage
     """
     question = ai_request.question.strip()
     
@@ -248,72 +391,139 @@ async def ai_endpoint(request: Request, ai_request: AIRequest):
         raise HTTPException(status_code=400, detail="The 'question' field cannot be empty.")
 
     try:
-        # Store the user's question in the vector store
-        store_message(question, "human")
-
-        # Retrieve relevant messages from the vector store
-        relevant_messages = retrieve_relevant_messages(question, top_k=5)
-
-        # Format the retrieved messages for the prompt
-        history_messages = "\n".join(
-            f"{'User' if msg['type'] == 'human' else 'AI'}: {msg['content']}" for msg in relevant_messages
-        )
-
-        # Prepare the input for the chain
-        input_data = {
-            "history_messages": history_messages,
-            "question": question,
-            "data": "No specific data available.",
-            "system_instruction": system_instruction,
-        }
-
-        # Add before invoking the LLM chain
-        token_count = len(tiktoken.encoding_for_model("gpt-4").encode(
-            input_data["system_instruction"] + input_data["history_messages"] + input_data["question"] + input_data["data"]))
-        logging.debug(f"Total tokens in request: {token_count}")
-
-        # Add before invoking the LLM chain
-        MAX_ALLOWED_TOKENS = 7000  # Safe limit for GPT-4 (8192 - 1000 completion - buffer)
-
-        if token_count > MAX_ALLOWED_TOKENS:
-            # Reduce the number of history messages
-            relevant_messages = relevant_messages[:3]  # Only use top 3 messages
+        # Smart routing
+        is_sales_question = is_related_to_dummy_data(question)
+        needs_context = needs_conversation_context(question)
+        is_simple_factual = is_simple_factual_question(question)
+        
+        if is_sales_question:
+            # PATH 1: SALES QUERIES (semantic search on sales data)
+            sales_data = search_sales_rep_data_fast(question, top_k=2)
+            
+            fast_chat_model = ChatOpenAI(
+                model="gpt-3.5-turbo",
+                openai_api_key=OPENAI_API_KEY,
+                temperature=0.3,
+                max_completion_tokens=500
+            )
+            
+            sales_prompt = PromptTemplate(
+                input_variables=["question", "data"],
+                template=(
+                    "You are a sales data assistant. Answer the question using the provided sales data.\n\n"
+                    "Sales Data:\n{data}\n\n"
+                    "Question: {question}\n\n"
+                    "Provide a concise, accurate answer:"
+                )
+            )
+            
+            fast_chain = sales_prompt | fast_chat_model
+            
+            # Token optimization
+            estimated_tokens = len(sales_data + question) // 4
+            if estimated_tokens > 3000:
+                sales_data = sales_data[:1000]
+            
+            response = fast_chain.invoke({
+                "question": question,
+                "data": sales_data
+            })
+            
+            # Store in background after response
+            response_text = response.content if hasattr(response, "content") else str(response)
+            
+            # Send response immediately
+            response_data = {"answer": response_text}
+            
+            # Store conversation in background (non-blocking)
+            asyncio.create_task(store_conversation_async(question, response_text))
+            
+            return response_data
+            
+        elif is_simple_factual and not needs_context:
+            # PATH 2: SIMPLE GENERAL (no history, no storage)
+            
+            simple_chat_model = ChatOpenAI(
+                model="gpt-3.5-turbo",
+                openai_api_key=OPENAI_API_KEY,
+                temperature=0.7,
+                max_completion_tokens=800
+            )
+            
+            simple_prompt = PromptTemplate(
+                input_variables=["question"],
+                template=(
+                    "You are a helpful AI assistant. Provide a clear, informative answer.\n\n"
+                    "Question: {question}\n\n"
+                    "Answer:"
+                )
+            )
+            
+            simple_chain = simple_prompt | simple_chat_model
+            response = simple_chain.invoke({"question": question})
+            
+            response_text = response.content if hasattr(response, "content") else str(response)
+            
+            # For simple factual questions, don't store at all (saves time and space)
+            return {"answer": response_text}
+            
+        else:
+            # PATH 3: CONTEXTUAL GENERAL (needs conversation history)
+            
+            # Retrieve history synchronously (needed for context)
+            try:
+                relevant_messages = retrieve_relevant_messages(question, top_k=3)
+            except Exception as e:
+                logging.error(f"Failed to retrieve conversation history: {e}")
+                relevant_messages = []  # Continue without history
+            
             history_messages = "\n".join(
                 f"{'User' if msg['type'] == 'human' else 'AI'}: {msg['content']}" for msg in relevant_messages
             )
-            input_data["history_messages"] = history_messages
-
-        # Check if the question is related to dummy data
-        if is_related_to_dummy_data(question):
-            sales_reps = DUMMY_DATA.get("salesReps", [])
-            if not sales_reps:
-                response = "I couldn't find any sales representatives in the dummy data."
-            else:
-                # Check for specific sales rep
-                for rep in sales_reps:
-                    if rep.get("name").lower() in question.lower():
-                        input_data["data"] = json.dumps(rep)
-                        break
-                else:
-                    input_data["data"] = json.dumps(sales_reps)
-
-        # Use the llm_chain directly instead of chain_with_message_history
-        response = llm_chain.invoke(input_data)
-
-        # Ensure response is a string
-        if hasattr(response, "content"):
-            response = response.content  # Extract content if it's an AIMessage
-        elif not isinstance(response, str):
-            response = json.dumps(response)  # Convert to string if it's not
-
-        # Store the AI's response in the vector store
-        store_message(response, "ai")
-
-        return {"answer": response}
+            
+            # Use GPT-3.5-turbo for speed
+            contextual_chat_model = ChatOpenAI(
+                model="gpt-3.5-turbo",  # Faster than GPT-4
+                openai_api_key=OPENAI_API_KEY,
+                temperature=0.7,
+                max_completion_tokens=1000
+            )
+            
+            contextual_prompt = PromptTemplate(
+                input_variables=["history_messages", "question", "data", "system_instruction"],
+                template=(
+                    "{system_instruction}\n\n"
+                    "Conversation history:\n"
+                    "{history_messages}\n\n"
+                    "The user asked: {question}\n"
+                    "Here is the relevant data: {data}\n"
+                    "Please provide a clean, human-readable, and elaborated response."
+                )
+            )
+            
+            contextual_chain = contextual_prompt | contextual_chat_model
+            
+            input_data = {
+                "history_messages": history_messages,
+                "question": question,
+                "data": "No specific data available.",
+                "system_instruction": system_instruction,
+            }
+            
+            response = contextual_chain.invoke(input_data)
+            response_text = response.content if hasattr(response, "content") else str(response)
+            
+            # Send response immediately
+            response_data = {"answer": response_text}
+            
+            # Store conversation in background (non-blocking)
+            asyncio.create_task(store_conversation_async(question, response_text))
+            
+            return response_data
+        
     except Exception as e:
-        logging.error(f"OpenAI API error: {e}", exc_info=True)
+        logging.error(f"AI API error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to process the AI request. Please try again later.")
-
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
