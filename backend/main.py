@@ -13,9 +13,7 @@ import tiktoken
 from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
-
-
-
+from functools import lru_cache
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -58,7 +56,6 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
     raise RuntimeError("OPENAI_API_KEY is not set in the environment variables.")
 
-
 # Initialize LangChain Chat Model
 chat_model = ChatOpenAI(
     model="gpt-4",
@@ -89,7 +86,6 @@ prompt_template = PromptTemplate(
 # Chain the PromptTemplate and ChatOpenAI using the `|` operator
 llm_chain = prompt_template | chat_model
 
-
 # Configure logging
 logging.basicConfig(
     level=logging.ERROR,
@@ -100,11 +96,117 @@ logging.basicConfig(
     ],
 )
 
+# Initialize the embedding model
+embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+
+# Initialize FAISS index for conversation history
+dimension = 384  # Dimension of the embeddings from the model
+index = faiss.IndexFlatL2(dimension)
+
+# Store metadata (e.g., message content and type) alongside embeddings
+conversation_metadata = []
+
+# NEW: Sales Rep Optimization Variables
+sales_rep_chunks = []
+sales_rep_index = None
+sales_rep_metadata = []
+sales_rep_cache = {}
+
+def create_sales_rep_chunks():
+    """Create searchable text chunks from sales rep data - runs once on startup"""
+    global sales_rep_chunks, sales_rep_metadata
+    
+    chunks = []
+    metadata = []
+    
+    for rep in DUMMY_DATA.get("salesReps", []):
+        # Profile chunk
+        profile_text = f"Sales Rep: {rep['name']}, Role: {rep['role']}, Region: {rep['region']}, Skills: {', '.join(rep['skills'])}"
+        chunks.append(profile_text)
+        metadata.append({"type": "profile", "rep_id": rep["id"], "rep_name": rep["name"]})
+        
+        # Deals chunk
+        if rep.get("deals"):
+            deals_text = f"{rep['name']} deals: "
+            for deal in rep["deals"]:
+                deals_text += f"Client {deal['client']} - ${deal['value']} - {deal['status']}; "
+            chunks.append(deals_text)
+            metadata.append({"type": "deals", "rep_id": rep["id"], "rep_name": rep["name"]})
+        
+        # Clients chunk
+        if rep.get("clients"):
+            clients_text = f"{rep['name']} clients: "
+            for client in rep["clients"]:
+                clients_text += f"{client['name']} ({client['industry']}) - {client['contact']}; "
+            chunks.append(clients_text)
+            metadata.append({"type": "clients", "rep_id": rep["id"], "rep_name": rep["name"]})
+    
+    return chunks, metadata
+
+def initialize_sales_rep_search():
+    """Initialize FAISS index for sales rep data - runs once on startup"""
+    global sales_rep_chunks, sales_rep_index, sales_rep_metadata
+    
+    sales_rep_chunks, sales_rep_metadata = create_sales_rep_chunks()
+    
+    if sales_rep_chunks:
+        # Create embeddings
+        embeddings = embedding_model.encode(sales_rep_chunks)
+        
+        # Initialize FAISS index for sales rep data
+        sales_rep_index = faiss.IndexFlatIP(dimension)
+        
+        # Normalize embeddings for cosine similarity
+        faiss.normalize_L2(embeddings)
+        sales_rep_index.add(embeddings.astype('float32'))
+
+@lru_cache(maxsize=50)
+def search_sales_rep_data(question: str, top_k: int = 3) -> str:
+    """Search for relevant sales rep information using semantic similarity"""
+    if sales_rep_index is None or not sales_rep_chunks:
+        return json.dumps(DUMMY_DATA.get("salesReps", []))
+    
+    # Check cache first
+    cache_key = f"{question.lower().strip()}_{top_k}"
+    if cache_key in sales_rep_cache:
+        return sales_rep_cache[cache_key]
+    
+    # Create query embedding
+    query_embedding = embedding_model.encode([question])
+    faiss.normalize_L2(query_embedding)
+    
+    # Search for similar chunks
+    scores, indices = sales_rep_index.search(query_embedding.astype('float32'), top_k)
+    
+    # Collect relevant information
+    relevant_info = []
+    seen_reps = set()
+    
+    for i, idx in enumerate(indices[0]):
+        if scores[0][i] > 0.2:  # Similarity threshold
+            chunk = sales_rep_chunks[idx]
+            metadata = sales_rep_metadata[idx]
+            rep_name = metadata["rep_name"]
+            
+            if rep_name not in seen_reps:
+                seen_reps.add(rep_name)
+                relevant_info.append(f"[{metadata['type'].upper()}] {chunk}")
+    
+    result = "\n".join(relevant_info) if relevant_info else json.dumps(DUMMY_DATA.get("salesReps", []))
+    
+    # Cache the result
+    sales_rep_cache[cache_key] = result
+    return result
+
+# Initialize sales rep search on startup
+initialize_sales_rep_search()
+
 # Function to check if the question is related to dummy data
 def is_related_to_dummy_data(question):
     keywords = [
         "sales reps", "sales representatives", "dummy data", "sales team",
-        "salesperson", "sales rep", "sales executive", "sales manager"
+        "salesperson", "sales rep", "sales executive", "sales manager",
+        "alice", "bob", "charlie", "dana", "deals", "clients", "performance"
     ]
     return any(keyword in question.lower() for keyword in keywords)
 
@@ -144,9 +246,7 @@ api_sales_reps_doc = """
 
 @app.get("/api/sales-reps", summary="Get Sales Representatives", tags=["Sales Reps"], description=api_sales_reps_doc)
 def get_sales_reps():
-    
     return DUMMY_DATA
-
 
 # Define the API doc
 api_ai_doc = """
@@ -194,17 +294,6 @@ api_ai_doc = """
 class AIRequest(BaseModel):
     question: str
 
-
-# Initialize the embedding model
-embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
-
-# Initialize FAISS index
-dimension = 384  # Dimension of the embeddings from the model
-index = faiss.IndexFlatL2(dimension)
-
-# Store metadata (e.g., message content and type) alongside embeddings
-conversation_metadata = []
-
 def store_message(message, message_type):
     """
     Store a message in the vector store with its metadata.
@@ -220,7 +309,6 @@ def store_message(message, message_type):
     # Store metadata
     conversation_metadata.append({"content": message, "type": message_type})
 
-
 def retrieve_relevant_messages(query, top_k=5):
     """
     Retrieve the most relevant messages from the vector store.
@@ -234,7 +322,6 @@ def retrieve_relevant_messages(query, top_k=5):
     # Retrieve the corresponding messages
     relevant_messages = [conversation_metadata[i] for i in indices[0] if i < len(conversation_metadata)]
     return relevant_messages
-
 
 # Remove the RunnableWithMessageHistory wrapper and use llm_chain directly
 @app.post("/api/ai", summary="AI Question Answering", tags=["AI"], description=api_ai_doc)
@@ -267,6 +354,11 @@ async def ai_endpoint(request: Request, ai_request: AIRequest):
             "system_instruction": system_instruction,
         }
 
+        # Check if the question is related to dummy data
+        if is_related_to_dummy_data(question):
+            # Use optimized semantic search instead of loading all data
+            input_data["data"] = search_sales_rep_data(question)
+
         # Add before invoking the LLM chain
         token_count = len(tiktoken.encoding_for_model("gpt-4").encode(
             input_data["system_instruction"] + input_data["history_messages"] + input_data["question"] + input_data["data"]))
@@ -283,26 +375,12 @@ async def ai_endpoint(request: Request, ai_request: AIRequest):
             )
             input_data["history_messages"] = history_messages
 
-        # Check if the question is related to dummy data
-        if is_related_to_dummy_data(question):
-            sales_reps = DUMMY_DATA.get("salesReps", [])
-            if not sales_reps:
-                response = "I couldn't find any sales representatives in the dummy data."
-            else:
-                # Check for specific sales rep
-                for rep in sales_reps:
-                    if rep.get("name").lower() in question.lower():
-                        input_data["data"] = json.dumps(rep)
-                        break
-                else:
-                    input_data["data"] = json.dumps(sales_reps)
-
         # Use the llm_chain directly instead of chain_with_message_history
         response = llm_chain.invoke(input_data)
 
         # Ensure response is a string
         if hasattr(response, "content"):
-            response = response.content  # Extract content if it's an AIMessage
+            response = response.content  # Extract content if it's AIMessage
         elif not isinstance(response, str):
             response = json.dumps(response)  # Convert to string if it's not
 
@@ -313,7 +391,6 @@ async def ai_endpoint(request: Request, ai_request: AIRequest):
     except Exception as e:
         logging.error(f"OpenAI API error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to process the AI request. Please try again later.")
-
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
