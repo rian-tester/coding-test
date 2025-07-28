@@ -5,13 +5,17 @@ import uvicorn
 import json
 import os
 from dotenv import load_dotenv
-import openai
-from openai import OpenAI
 import logging
 from pydantic import BaseModel
+from langchain_openai import ChatOpenAI
+from langchain.prompts import PromptTemplate
+import tiktoken
+from sentence_transformers import SentenceTransformer
+import faiss
+import numpy as np
 
-# Load environment variables
-load_dotenv()
+
+
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -46,13 +50,45 @@ app.mount("/images", StaticFiles(directory="images"), name="images")
 with open("dummyData.json", "r") as f:
     DUMMY_DATA = json.load(f)
 
+# Load environment variables
+load_dotenv()
+
 # Load OpenAI API key
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
     raise RuntimeError("OPENAI_API_KEY is not set in the environment variables.")
 
-# Initialize OpenAI client
-openai_client = OpenAI(api_key=OPENAI_API_KEY)
+
+# Initialize LangChain Chat Model
+chat_model = ChatOpenAI(
+    model="gpt-4",
+    openai_api_key=OPENAI_API_KEY,
+    temperature=0.7,
+    max_completion_tokens=1000  # Reduced to leave room for input tokens
+)
+
+# Load system instruction from assistant.txt
+def load_system_instruction():
+    with open("assistant.txt", "r") as f:
+        return f.read().strip()
+
+# Create a LangChain PromptTemplate
+system_instruction = load_system_instruction()
+prompt_template = PromptTemplate(
+    input_variables=["history_messages", "question", "data"],
+    template=(
+        "{system_instruction}\n\n"
+        "Conversation history:\n"
+        "{history_messages}\n\n"
+        "The user asked: {question}\n"
+        "Here is the relevant data: {data}\n"
+        "Please provide a clean, human-readable, and elaborated response."
+    )
+)
+
+# Chain the PromptTemplate and ChatOpenAI using the `|` operator
+llm_chain = prompt_template | chat_model
+
 
 # Configure logging
 logging.basicConfig(
@@ -63,11 +99,6 @@ logging.basicConfig(
         logging.FileHandler("error.log"),  # Logs to a file
     ],
 )
-
-# Load system instruction from a file
-def load_system_instruction():
-    with open("assistant.txt", "r") as f:
-        return f.read().strip()
 
 # Function to check if the question is related to dummy data
 def is_related_to_dummy_data(question):
@@ -86,9 +117,8 @@ def generate_dummy_data_response():
     response += "\n".join([f"- {rep}" for rep in sales_reps])
     return response
 
-@app.get("/api/sales-reps", summary="Get Sales Representatives", tags=["Sales Reps"])
-def get_sales_reps():
-    """
+# Define the sales-rep doc
+api_sales_reps_doc = """
     Retrieve a list of sales representatives and their details.
 
     **Response:**
@@ -111,15 +141,15 @@ def get_sales_reps():
     }
     ```
     """
+
+@app.get("/api/sales-reps", summary="Get Sales Representatives", tags=["Sales Reps"], description=api_sales_reps_doc)
+def get_sales_reps():
+    
     return DUMMY_DATA
 
-# Define a Pydantic model for the request body
-class AIRequest(BaseModel):
-    question: str
 
-@app.post("/api/ai", summary="AI Question Answering", tags=["AI"])
-async def ai_endpoint(request: AIRequest):
-    """
+# Define the API doc
+api_ai_doc = """
     Handles AI-powered question-answering requests.
 
     **Request Body:**
@@ -159,70 +189,133 @@ async def ai_endpoint(request: AIRequest):
     }
     ```
     """
-    question = request.question.strip()
+
+# Define a Pydantic model for the request body
+class AIRequest(BaseModel):
+    question: str
+
+
+# Initialize the embedding model
+embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+
+# Initialize FAISS index
+dimension = 384  # Dimension of the embeddings from the model
+index = faiss.IndexFlatL2(dimension)
+
+# Store metadata (e.g., message content and type) alongside embeddings
+conversation_metadata = []
+
+def store_message(message, message_type):
+    """
+    Store a message in the vector store with its metadata.
+    """
+    global conversation_metadata
+
+    # Generate embedding for the message
+    embedding = embedding_model.encode([message])
+
+    # Add the embedding to the FAISS index
+    index.add(np.array(embedding, dtype=np.float32))
+
+    # Store metadata
+    conversation_metadata.append({"content": message, "type": message_type})
+
+
+def retrieve_relevant_messages(query, top_k=5):
+    """
+    Retrieve the most relevant messages from the vector store.
+    """
+    # Generate embedding for the query
+    query_embedding = embedding_model.encode([query])
+
+    # Perform similarity search
+    distances, indices = index.search(np.array(query_embedding, dtype=np.float32), top_k)
+
+    # Retrieve the corresponding messages
+    relevant_messages = [conversation_metadata[i] for i in indices[0] if i < len(conversation_metadata)]
+    return relevant_messages
+
+
+# Remove the RunnableWithMessageHistory wrapper and use llm_chain directly
+@app.post("/api/ai", summary="AI Question Answering", tags=["AI"], description=api_ai_doc)
+async def ai_endpoint(request: Request, ai_request: AIRequest):
+    """
+    Handles AI-powered question-answering requests with conversational memory.
+    """
+    question = ai_request.question.strip()
+    
     if not question:
         raise HTTPException(status_code=400, detail="The 'question' field cannot be empty.")
 
     try:
+        # Store the user's question in the vector store
+        store_message(question, "human")
+
+        # Retrieve relevant messages from the vector store
+        relevant_messages = retrieve_relevant_messages(question, top_k=5)
+
+        # Format the retrieved messages for the prompt
+        history_messages = "\n".join(
+            f"{'User' if msg['type'] == 'human' else 'AI'}: {msg['content']}" for msg in relevant_messages
+        )
+
+        # Prepare the input for the chain
+        input_data = {
+            "history_messages": history_messages,
+            "question": question,
+            "data": "No specific data available.",
+            "system_instruction": system_instruction,
+        }
+
+        # Add before invoking the LLM chain
+        token_count = len(tiktoken.encoding_for_model("gpt-4").encode(
+            input_data["system_instruction"] + input_data["history_messages"] + input_data["question"] + input_data["data"]))
+        logging.debug(f"Total tokens in request: {token_count}")
+
+        # Add before invoking the LLM chain
+        MAX_ALLOWED_TOKENS = 7000  # Safe limit for GPT-4 (8192 - 1000 completion - buffer)
+
+        if token_count > MAX_ALLOWED_TOKENS:
+            # Reduce the number of history messages
+            relevant_messages = relevant_messages[:3]  # Only use top 3 messages
+            history_messages = "\n".join(
+                f"{'User' if msg['type'] == 'human' else 'AI'}: {msg['content']}" for msg in relevant_messages
+            )
+            input_data["history_messages"] = history_messages
+
         # Check if the question is related to dummy data
         if is_related_to_dummy_data(question):
-            system_instruction = load_system_instruction()
             sales_reps = DUMMY_DATA.get("salesReps", [])
             if not sales_reps:
-                return {"answer": "I couldn't find any sales representatives in the dummy data."}
+                response = "I couldn't find any sales representatives in the dummy data."
+            else:
+                # Check for specific sales rep
+                for rep in sales_reps:
+                    if rep.get("name").lower() in question.lower():
+                        input_data["data"] = json.dumps(rep)
+                        break
+                else:
+                    input_data["data"] = json.dumps(sales_reps)
 
-            # Check for specific sales rep
-            for rep in sales_reps:
-                if rep.get("name").lower() in question.lower():
-                    gpt_prompt = (
-                        f"The user asked: {question}. Here is the sales representative data for {rep.get('name')}: {json.dumps(rep)}. "
-                        f"Please provide a clean, human-readable, and elaborated response."
-                    )
-                    gpt_response = openai_client.chat.completions.create(
-                        model="gpt-4o",
-                        messages=[
-                            {"role": "system", "content": system_instruction},
-                            {"role": "user", "content": gpt_prompt},
-                        ],
-                        max_tokens=2000,
-                        temperature=0.7,
-                    )
-                    return {"answer": gpt_response.choices[0].message.content.strip()}
+        # Use the llm_chain directly instead of chain_with_message_history
+        response = llm_chain.invoke(input_data)
 
-            # General response for all sales reps
-            gpt_prompt = (
-                f"The user asked: {question}. Here is the sales representative data: {json.dumps(sales_reps)}. "
-                f"Please provide a clean, human-readable, and elaborated response."
-            )
-            gpt_response = openai_client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
-                    {"role": "system", "content": system_instruction},
-                    {"role": "user", "content": gpt_prompt},
-                ],
-                max_tokens=2000,
-                temperature=0.7,
-            )
-            return {"answer": gpt_response.choices[0].message.content.strip()}
-        else:
-            # General AI response
-            system_instruction = load_system_instruction()
-            gpt_response = openai_client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
-                    {"role": "system", "content": system_instruction},
-                    {"role": "user", "content": question},
-                ],
-                max_tokens=2000,
-                temperature=0.7,
-            )
-            return {"answer": gpt_response.choices[0].message.content.strip()}
+        # Ensure response is a string
+        if hasattr(response, "content"):
+            response = response.content  # Extract content if it's an AIMessage
+        elif not isinstance(response, str):
+            response = json.dumps(response)  # Convert to string if it's not
+
+        # Store the AI's response in the vector store
+        store_message(response, "ai")
+
+        return {"answer": response}
     except Exception as e:
-        logging.error(f"OpenAI API error: {e}")
+        logging.error(f"OpenAI API error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to process the AI request. Please try again later.")
-    except Exception as e:
-        logging.error(f"Unexpected error: {e}")
-        raise HTTPException(status_code=500, detail="An unexpected error occurred. Please try again later.")
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
+

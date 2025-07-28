@@ -56,9 +56,14 @@ export default function Home() {
     if (question.trim() === "") return;
     setLoadingAI(true);
     try {
+      const headers = {
+        "Content-Type": "application/json",
+        "X-Session-ID": "unique-session-id", // Generate or retrieve a session ID
+      };
+
       const response = await fetch("http://localhost:8000/api/ai", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ question }),
       });
       const data = await response.json();
@@ -110,10 +115,10 @@ export default function Home() {
             onNavigate={handleNavigate}
           />
 
-          <div className={`main-content ${isDocked ? "expanded" : ""}`}>
+          <main className={`main-content ${isDocked ? "expanded" : ""}`}>
             {/* Dummy Data Section */}
             {activeSection === "dummy-data" && (
-              <section className="dummy-data">
+              <div className="dummy-section-wrapper">
                 <h2 className="section-header blue">Dummy Data</h2>
                 {loading ? (
                   <Spinner />
@@ -124,25 +129,27 @@ export default function Home() {
                     ))}
                   </ul>
                 )}
-              </section>
+              </div>
             )}
 
             {/* AI Section */}
             {activeSection === "ai-section" && (
-              <section className="ai-section">
+              <div className="ai-section-wrapper">
                 <h2 className="section-header blue">Ask a Question</h2>
-                <ChatBot
-                  question={question}
-                  setQuestion={setQuestion}
-                  answerHistory={answerHistory}
-                  loadingAI={loadingAI}
-                  handleAskQuestion={handleAskQuestion}
-                  handleClearChat={handleClearChat}
-                  handleKeyDown={handleKeyDown}
-                />
-              </section>
+                <div style={{ height: "100%", minHeight: 0, display: "flex", flexDirection: "column" }}>
+                  <ChatBot
+                    question={question}
+                    setQuestion={setQuestion}
+                    answerHistory={answerHistory}
+                    loadingAI={loadingAI}
+                    handleAskQuestion={handleAskQuestion}
+                    handleClearChat={handleClearChat}
+                    handleKeyDown={handleKeyDown}
+                  />
+                </div>
+              </div>
             )}
-          </div>
+          </main>
         </div>
 
         {/* Audio Player Component */}
