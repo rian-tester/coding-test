@@ -1,0 +1,142 @@
+API Log Started - 2025-08-06 17:40:26.925621
+2025-08-06 17:41:35 | REQUEST_START | e71e21d6 | GET /
+2025-08-06 17:41:36 | REQUEST_START | 3d1086df | GET /
+2025-08-06 17:41:38 | REQUEST_START | f9c81394 | GET /
+2025-08-06 17:42:03 | REQUEST_START | 4f21fdee | GET /
+2025-08-06 17:42:04 | REQUEST_START | 9dfedd8c | GET /
+2025-08-06 17:42:08 | REQUEST_START | 157e102f | GET /api/sales-reps
+2025-08-06 17:42:10 | REQUEST_START | 9dbcc554 | GET /
+2025-08-06 17:42:11 | REQUEST_START | c153e446 | GET /
+2025-08-06 17:42:24 | REQUEST_START | e059f674 | GET /
+2025-08-06 17:42:26 | REQUEST_START | 1307df34 | GET /
+2025-08-06 17:42:27 | REQUEST_START | 9385cf7a | GET /
+2025-08-06 17:42:28 | REQUEST_START | 4172d513 | GET /
+2025-08-06 17:42:28 | REQUEST_START | c09c36a8 | GET /
+2025-08-06 17:42:29 | REQUEST_START | 9a137399 | GET /
+2025-08-06 17:42:29 | REQUEST_START | 9f0ab767 | GET /
+2025-08-06 17:42:30 | REQUEST_START | 88b5b51c | GET /
+2025-08-06 17:42:30 | REQUEST_START | be8bee04 | GET /
+2025-08-06 17:42:30 | REQUEST_START | 69ba6754 | GET /
+2025-08-06 17:42:30 | REQUEST_START | 2c32f554 | GET /
+2025-08-06 17:42:30 | REQUEST_START | 68fe1901 | GET /
+2025-08-06 17:42:30 | REQUEST_START | 5ab463a5 | GET /
+2025-08-06 17:44:47 | REQUEST_START | 965cbe46 | GET /
+2025-08-06 17:44:47 | REQUEST_START | b8b9ab7f | GET /favicon.ico
+2025-08-06 17:44:51 | REQUEST_START | 72573a66 | GET /
+2025-08-06 17:44:51 | REQUEST_START | b9fb539d | GET /favicon.ico
+2025-08-06 17:45:00 | REQUEST_START | 5fff5057 | GET /api/sales-reps
+2025-08-06 17:45:01 | REQUEST_START | 3bc9d3bc | GET /
+2025-08-06 17:45:01 | REQUEST_START | 371ed465 | GET /favicon.ico
+2025-08-06 18:11:06 | REQUEST_START | a55bea56 | GET /docs
+2025-08-06 18:11:06 | REQUEST_START | 414ee023 | GET /favicon.ico
+2025-08-06 18:11:09 | REQUEST_START | f9fe9812 | GET /
+2025-08-06 18:11:09 | REQUEST_START | 15c35136 | GET /
+2025-08-06 18:11:09 | REQUEST_START | 01bebdea | GET /favicon.ico
+2025-08-07 01:11:14.676 | STARTUP_BEGIN        | SERVER | - | Initializing InterOpera API Server
+2025-08-07 01:11:14.676 | ENVIRONMENT          | SERVER | - | Python 3.13.5
+2025-08-07 01:11:14.676 | WORKING_DIR          | SERVER | - | D:\_AI\InterOpera\backend
+2025-08-07 01:11:14.676 | LOG_FILE_READY       | SERVER | - | api-log.txt created successfully
+2025-08-07 01:11:14.677 | CONFIG_SUCCESS       | SERVER | - | OPENAI_API_KEY loaded successfully
+2025-08-07 01:11:21.948 | INIT_RAG             | SERVER | - | Initializing sales rep search system
+2025-08-07 01:11:22.152 | INIT_RAG_COMPLETE    | SERVER | - | Indexed 15 sales rep chunks
+2025-08-07 01:11:22.154 | STARTUP_COMPLETE     | SERVER | - | InterOpera API Server is ready to accept requests
+2025-08-06 18:11:26 | REQUEST_START | d8cf0537 | GET /
+2025-08-06 18:11:26 | REQUEST_START | 9b56d951 | GET /favicon.ico
+2025-08-06 18:11:28 | REQUEST_START | 146fb2e8 | GET /
+2025-08-06 18:11:28 | REQUEST_START | b13d5216 | GET /favicon.ico
+2025-08-06 18:11:45 | REQUEST_START | 5b0f3193 | GET /
+2025-08-06 18:11:45 | REQUEST_START | 3ff9c171 | GET /favicon.ico
+2025-08-07 01:12:02.581 | REQUEST_START        | ef527c00 | - | GET /
+2025-08-07 01:12:02.582 | REQUEST_COMPLETE     | ef527c00 | 0.002s | Route: Unknown | OpenAI calls: 0 | RAG calls: 0 | Context calls: 0 | Status: 200
+2025-08-07 01:12:02.582 | ---                  | ef527c00 | - | End of request
+2025-08-07 01:12:02.645 | REQUEST_START        | 2bee16f6 | - | GET /favicon.ico
+2025-08-07 01:12:02.647 | REQUEST_COMPLETE     | 2bee16f6 | 0.002s | Route: Unknown | OpenAI calls: 0 | RAG calls: 0 | Context calls: 0 | Status: 200
+2025-08-07 01:12:02.647 | ---                  | 2bee16f6 | - | End of request
+2025-08-07 01:12:06.303 | REQUEST_START        | 0074d8d6 | - | GET /docs
+2025-08-07 01:12:06.304 | REQUEST_COMPLETE     | 0074d8d6 | 0.001s | Route: Unknown | OpenAI calls: 0 | RAG calls: 0 | Context calls: 0 | Status: 200
+2025-08-07 01:12:06.305 | ---                  | 0074d8d6 | - | End of request
+2025-08-07 01:12:07.309 | REQUEST_START        | 65455b3a | - | GET /openapi.json
+2025-08-07 01:12:07.317 | REQUEST_COMPLETE     | 65455b3a | 0.008s | Route: Unknown | OpenAI calls: 0 | RAG calls: 0 | Context calls: 0 | Status: 200
+2025-08-07 01:12:07.317 | ---                  | 65455b3a | - | End of request
+2025-08-07 01:12:36.649 | REQUEST_START        | 996d75f4 | - | POST /api/ai
+2025-08-07 01:12:36.652 | INPUT_RECEIVED       | 996d75f4 | 0.000s | Question length: 5 chars | Preview: hello...
+2025-08-07 01:12:36.653 | ROUTING_START        | 996d75f4 | 0.005s | Analyzing question type
+2025-08-07 01:12:36.654 | ROUTING_DECISION     | 996d75f4 | 0.006s | CONTEXTUAL_PATH
+2025-08-07 01:12:36.655 | CONTEXT_RETRIEVAL_START | 996d75f4 | 0.006s | Retrieving conversation history
+2025-08-07 01:12:36.656 | CONTEXT_RETRIEVAL_END | 996d75f4 | 0.007s | took 0.000s | Retrieved 0 relevant messages
+2025-08-07 01:12:36.656 | MODEL_PREP           | 996d75f4 | 0.007s | Setting up GPT-3.5-turbo for contextual query
+2025-08-07 01:12:37.098 | OPENAI_START         | 996d75f4 | 0.449s | Calling GPT-3.5-turbo for contextual query
+2025-08-07 01:12:38.767 | OPENAI_END           | 996d75f4 | 2.118s | took 1.669s | Contextual query completed
+2025-08-07 01:12:38.768 | RESPONSE_READY       | 996d75f4 | 2.119s | Response length: 136 chars
+2025-08-07 01:12:38.768 | BACKGROUND_STORAGE   | 996d75f4 | 2.119s | Queuing contextual conversation storage
+2025-08-07 01:12:38.772 | REQUEST_COMPLETE     | 996d75f4 | 2.124s | Route: CONTEXTUAL_PATH | OpenAI calls: 1 | RAG calls: 0 | Context calls: 1 | Status: 200
+2025-08-07 01:12:38.773 | ---                  | 996d75f4 | - | End of request
+2025-08-07 01:12:38.864 | STORAGE_COMPLETE     | BACKGROUND | 0.095s | Stored conversation pair in 0.095s
+2025-08-07 01:12:53.937 | SHUTDOWN_BEGIN       | SERVER | - | InterOpera API Server shutting down
+2025-08-07 01:14:58.254 | STARTUP_BEGIN        | SERVER | - | Initializing InterOpera API Server
+2025-08-07 01:14:58.255 | ENVIRONMENT          | SERVER | - | Python 3.13.5
+2025-08-07 01:14:58.256 | WORKING_DIR          | SERVER | - | D:\_AI\InterOpera\backend
+2025-08-07 01:14:58.261 | LOG_FILE_READY       | SERVER | - | api-log.txt created successfully
+2025-08-07 01:14:58.265 | CONFIG_SUCCESS       | SERVER | - | OPENAI_API_KEY loaded successfully
+2025-08-07 01:15:06.302 | INIT_RAG             | SERVER | - | Initializing sales rep search system
+2025-08-07 01:15:06.573 | INIT_RAG_COMPLETE    | SERVER | - | Indexed 15 sales rep chunks
+2025-08-07 01:15:06.579 | STARTUP_COMPLETE     | SERVER | - | InterOpera API Server is ready to accept requests
+2025-08-07 01:15:27.716 | REQUEST_START        | 7539f028 | - | POST /api/ai
+2025-08-07 01:15:27.718 | INPUT_RECEIVED       | 7539f028 | 0.000s | Question length: 28 chars | Preview: do you have sales reps data?...
+2025-08-07 01:15:27.718 | ROUTING_START        | 7539f028 | 0.002s | Analyzing question type
+2025-08-07 01:15:27.718 | ROUTING_DECISION     | 7539f028 | 0.002s | SALES_RAG_PATH
+2025-08-07 01:15:27.719 | RAG_START            | 7539f028 | 0.003s | Searching sales data
+2025-08-07 01:15:27.863 | RAG_END              | 7539f028 | 0.147s | took 0.144s | Retrieved 234 chars of data
+2025-08-07 01:15:27.864 | MODEL_PREP           | 7539f028 | 0.148s | Setting up GPT-3.5-turbo for sales query
+2025-08-07 01:15:29.743 | OPENAI_START         | 7539f028 | 2.027s | Calling GPT-3.5-turbo for sales data
+2025-08-07 01:15:30.550 | OPENAI_END           | 7539f028 | 2.834s | took 0.807s | Sales query completed
+2025-08-07 01:15:30.551 | RESPONSE_READY       | 7539f028 | 2.835s | Response length: 62 chars
+2025-08-07 01:15:30.552 | BACKGROUND_STORAGE   | 7539f028 | 2.836s | Queuing conversation storage
+2025-08-07 01:15:30.559 | REQUEST_COMPLETE     | 7539f028 | 2.843s | Route: SALES_RAG_PATH | OpenAI calls: 1 | RAG calls: 1 | Context calls: 0 | Status: 200
+2025-08-07 01:15:30.559 | ---                  | 7539f028 | - | End of request
+2025-08-07 01:15:30.758 | STORAGE_COMPLETE     | BACKGROUND | 0.205s | Stored conversation pair in 0.205s
+2025-08-07 01:15:51.632 | REQUEST_START        | 3e841db3 | - | POST /api/ai
+2025-08-07 01:15:51.633 | INPUT_RECEIVED       | 3e841db3 | 0.000s | Question length: 27 chars | Preview: what is capital of jakarta?...
+2025-08-07 01:15:51.633 | ROUTING_START        | 3e841db3 | 0.002s | Analyzing question type
+2025-08-07 01:15:51.634 | ROUTING_DECISION     | 3e841db3 | 0.002s | CONTEXTUAL_PATH
+2025-08-07 01:15:51.634 | CONTEXT_RETRIEVAL_START | 3e841db3 | 0.002s | Retrieving conversation history
+2025-08-07 01:15:51.698 | CONTEXT_RETRIEVAL_END | 3e841db3 | 0.066s | took 0.064s | Retrieved 2 relevant messages
+2025-08-07 01:15:51.699 | MODEL_PREP           | 3e841db3 | 0.067s | Setting up GPT-3.5-turbo for contextual query
+2025-08-07 01:15:53.711 | OPENAI_START         | 3e841db3 | 2.080s | Calling GPT-3.5-turbo for contextual query
+2025-08-07 01:15:54.540 | OPENAI_END           | 3e841db3 | 2.908s | took 0.829s | Contextual query completed
+2025-08-07 01:15:54.540 | RESPONSE_READY       | 3e841db3 | 2.909s | Response length: 209 chars
+2025-08-07 01:15:54.541 | BACKGROUND_STORAGE   | 3e841db3 | 2.909s | Queuing contextual conversation storage
+2025-08-07 01:15:54.543 | REQUEST_COMPLETE     | 3e841db3 | 2.911s | Route: CONTEXTUAL_PATH | OpenAI calls: 1 | RAG calls: 0 | Context calls: 1 | Status: 200
+2025-08-07 01:15:54.543 | ---                  | 3e841db3 | - | End of request
+2025-08-07 01:15:54.717 | STORAGE_COMPLETE     | BACKGROUND | 0.175s | Stored conversation pair in 0.175s
+2025-08-07 01:19:47.512 | REQUEST_START        | b203b28e | - | GET /api/sales-reps
+2025-08-07 01:19:47.516 | REQUEST_COMPLETE     | b203b28e | 0.004s | Route: Unknown | OpenAI calls: 0 | RAG calls: 0 | Context calls: 0 | Status: 200
+2025-08-07 01:19:47.517 | ---                  | b203b28e | - | End of request
+2025-08-07 01:19:52.876 | REQUEST_START        | 0470a274 | - | POST /api/ai
+2025-08-07 01:19:52.877 | INPUT_RECEIVED       | 0470a274 | 0.000s | Question length: 11 chars | Preview: hallo there...
+2025-08-07 01:19:52.877 | ROUTING_START        | 0470a274 | 0.002s | Analyzing question type
+2025-08-07 01:19:52.879 | ROUTING_DECISION     | 0470a274 | 0.003s | CONTEXTUAL_PATH
+2025-08-07 01:19:52.879 | CONTEXT_RETRIEVAL_START | 0470a274 | 0.003s | Retrieving conversation history
+2025-08-07 01:19:52.946 | CONTEXT_RETRIEVAL_END | 0470a274 | 0.070s | took 0.066s | Retrieved 3 relevant messages
+2025-08-07 01:19:52.947 | MODEL_PREP           | 0470a274 | 0.071s | Setting up GPT-3.5-turbo for contextual query
+2025-08-07 01:19:54.862 | OPENAI_START         | 0470a274 | 1.986s | Calling GPT-3.5-turbo for contextual query
+2025-08-07 01:19:55.809 | OPENAI_END           | 0470a274 | 2.933s | took 0.947s | Contextual query completed
+2025-08-07 01:19:55.810 | RESPONSE_READY       | 0470a274 | 2.934s | Response length: 290 chars
+2025-08-07 01:19:55.810 | BACKGROUND_STORAGE   | 0470a274 | 2.934s | Queuing contextual conversation storage
+2025-08-07 01:19:55.814 | REQUEST_COMPLETE     | 0470a274 | 2.938s | Route: CONTEXTUAL_PATH | OpenAI calls: 1 | RAG calls: 0 | Context calls: 1 | Status: 200
+2025-08-07 01:19:55.815 | ---                  | 0470a274 | - | End of request
+2025-08-07 01:19:55.974 | STORAGE_COMPLETE     | BACKGROUND | 0.162s | Stored conversation pair in 0.162s
+2025-08-07 01:20:13.147 | REQUEST_START        | d276c756 | - | POST /api/ai
+2025-08-07 01:20:13.149 | INPUT_RECEIVED       | d276c756 | 0.000s | Question length: 21 chars | Preview: who is bob and alice?...
+2025-08-07 01:20:13.151 | ROUTING_START        | d276c756 | 0.003s | Analyzing question type
+2025-08-07 01:20:13.151 | ROUTING_DECISION     | d276c756 | 0.004s | SALES_RAG_PATH
+2025-08-07 01:20:13.152 | RAG_START            | d276c756 | 0.004s | Searching sales data
+2025-08-07 01:20:13.226 | RAG_END              | d276c756 | 0.078s | took 0.074s | Retrieved 240 chars of data
+2025-08-07 01:20:13.227 | MODEL_PREP           | d276c756 | 0.080s | Setting up GPT-3.5-turbo for sales query
+2025-08-07 01:20:15.183 | OPENAI_START         | d276c756 | 2.036s | Calling GPT-3.5-turbo for sales data
+2025-08-07 01:20:17.877 | OPENAI_END           | d276c756 | 4.729s | took 2.694s | Sales query completed
+2025-08-07 01:20:17.877 | RESPONSE_READY       | d276c756 | 4.730s | Response length: 126 chars
+2025-08-07 01:20:17.878 | BACKGROUND_STORAGE   | d276c756 | 4.730s | Queuing conversation storage
+2025-08-07 01:20:17.880 | REQUEST_COMPLETE     | d276c756 | 4.733s | Route: SALES_RAG_PATH | OpenAI calls: 1 | RAG calls: 1 | Context calls: 0 | Status: 200
+2025-08-07 01:20:17.880 | ---                  | d276c756 | - | End of request
+2025-08-07 01:20:18.229 | STORAGE_COMPLETE     | BACKGROUND | 0.350s | Stored conversation pair in 0.350s

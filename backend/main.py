@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from middleware.timing import TimingMiddleware
 import uvicorn
 import json
 import os
@@ -16,6 +17,30 @@ import numpy as np
 from functools import lru_cache
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+import time
+from utils.logger import logger
+
+# Initialize logging on server startup
+def initialize_server_logging():
+    """Initialize comprehensive server logging"""
+    logger.log_sync("SERVER", "STARTUP_BEGIN", extra="Initializing InterOpera API Server")
+    
+    # Log environment information
+    python_version = f"{os.sys.version_info.major}.{os.sys.version_info.minor}.{os.sys.version_info.micro}"
+    logger.log_sync("SERVER", "ENVIRONMENT", extra=f"Python {python_version}")
+    
+    # Log current working directory
+    current_dir = os.getcwd()
+    logger.log_sync("SERVER", "WORKING_DIR", extra=current_dir)
+    
+    # Check if log file was created successfully
+    if os.path.exists("api-log.txt"):
+        logger.log_sync("SERVER", "LOG_FILE_READY", extra="api-log.txt created successfully")
+    else:
+        logger.log_sync("SERVER", "LOG_FILE_ERROR", extra="Failed to create api-log.txt")
+
+# Call initialization
+initialize_server_logging()
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -34,7 +59,8 @@ app = FastAPI(
     },
 )
 
-# Add CORS middleware
+# Add middleware
+app.add_middleware(TimingMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],  # Frontend URL
@@ -56,7 +82,10 @@ load_dotenv()
 # Load OpenAI API key
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
+    logger.log_sync("SERVER", "CONFIG_ERROR", extra="OPENAI_API_KEY not found in environment")
     raise RuntimeError("OPENAI_API_KEY is not set in the environment variables.")
+else:
+    logger.log_sync("SERVER", "CONFIG_SUCCESS", extra="OPENAI_API_KEY loaded successfully")
 
 # Initialize LangChain Chat Model
 chat_model = ChatOpenAI(
@@ -201,7 +230,9 @@ def search_sales_rep_data_fast(question: str, top_k: int = 2) -> str:
     return result
 
 # Initialize sales rep search on startup
+logger.log_sync("SERVER", "INIT_RAG", extra="Initializing sales rep search system")
 initialize_sales_rep_search()
+logger.log_sync("SERVER", "INIT_RAG_COMPLETE", extra=f"Indexed {len(sales_rep_chunks)} sales rep chunks")
 
 # Function to check if the question is related to dummy data
 def is_related_to_dummy_data(question):
@@ -372,34 +403,53 @@ def is_simple_factual_question(question: str) -> bool:
 async def store_conversation_async(question: str, response: str):
     """Store conversation in background after response is sent"""
     try:
+        start_time = time.time()
         # Run in thread pool to avoid blocking
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(executor, store_message, question, "human")
         await loop.run_in_executor(executor, store_message, response, "ai")
+        
+        duration = time.time() - start_time
+        # Log storage completion (using a generic session for background tasks)
+        logger.log_sync("BACKGROUND", "STORAGE_COMPLETE", duration, f"Stored conversation pair in {duration:.3f}s")
     except Exception as e:
+        logger.log_sync("BACKGROUND", "STORAGE_ERROR", extra=f"Background storage failed: {str(e)}")
         logging.error(f"Background storage error: {e}")
 
 # Remove the RunnableWithMessageHistory wrapper and use llm_chain directly
 @app.post("/api/ai", summary="AI Question Answering", tags=["AI"], description=api_ai_doc)
 async def ai_endpoint(request: Request, ai_request: AIRequest):
     """
-    Tri-path optimized AI endpoint with async background storage
+    Enhanced tri-path optimized AI endpoint with comprehensive logging
     """
+    timing_context = request.state.timing_context
     question = ai_request.question.strip()
     
+    # Log input received
+    timing_context.log_input_received(question, len(question))
+    
     if not question:
+        timing_context.log_event("ERROR", "Empty question provided")
         raise HTTPException(status_code=400, detail="The 'question' field cannot be empty.")
 
     try:
-        # Smart routing
+        # Smart routing with logging
+        timing_context.log_event("ROUTING_START", "Analyzing question type")
         is_sales_question = is_related_to_dummy_data(question)
         needs_context = needs_conversation_context(question)
         is_simple_factual = is_simple_factual_question(question)
         
         if is_sales_question:
-            # PATH 1: SALES QUERIES (semantic search on sales data)
-            sales_data = search_sales_rep_data_fast(question, top_k=2)
+            timing_context.log_event("ROUTING_DECISION", "SALES_RAG_PATH")
             
+            # RAG operations with detailed timing
+            rag_start_time = time.time()
+            timing_context.log_event("RAG_START", "Searching sales data")
+            sales_data = search_sales_rep_data_fast(question, top_k=2)
+            timing_context.log_duration_event("RAG_END", rag_start_time, f"Retrieved {len(sales_data)} chars of data")
+            
+            # Prepare fast chat model
+            timing_context.log_event("MODEL_PREP", "Setting up GPT-3.5-turbo for sales query")
             fast_chat_model = ChatOpenAI(
                 model="gpt-3.5-turbo",
                 openai_api_key=OPENAI_API_KEY,
@@ -419,30 +469,36 @@ async def ai_endpoint(request: Request, ai_request: AIRequest):
             
             fast_chain = sales_prompt | fast_chat_model
             
-            # Token optimization
+            # Token optimization with logging
             estimated_tokens = len(sales_data + question) // 4
             if estimated_tokens > 3000:
+                timing_context.log_event("TOKEN_OPTIMIZATION", f"Truncating data from {len(sales_data)} to 1000 chars")
                 sales_data = sales_data[:1000]
             
+            # OpenAI API call with detailed timing
+            openai_start_time = time.time()
+            timing_context.log_event("OPENAI_START", "Calling GPT-3.5-turbo for sales data")
             response = fast_chain.invoke({
                 "question": question,
                 "data": sales_data
             })
+            timing_context.log_duration_event("OPENAI_END", openai_start_time, "Sales query completed")
             
-            # Store in background after response
             response_text = response.content if hasattr(response, "content") else str(response)
+            timing_context.log_response_ready(len(response_text))
             
-            # Send response immediately
             response_data = {"answer": response_text}
             
-            # Store conversation in background (non-blocking)
+            # Store in background after response with logging
+            timing_context.log_event("BACKGROUND_STORAGE", "Queuing conversation storage")
             asyncio.create_task(store_conversation_async(question, response_text))
             
             return response_data
             
         elif is_simple_factual and not needs_context:
-            # PATH 2: SIMPLE GENERAL (no history, no storage)
+            timing_context.log_event("ROUTING_DECISION", "SIMPLE_GENERAL_PATH")
             
+            timing_context.log_event("MODEL_PREP", "Setting up GPT-3.5-turbo for general query")
             simple_chat_model = ChatOpenAI(
                 model="gpt-3.5-turbo",
                 openai_api_key=OPENAI_API_KEY,
@@ -460,28 +516,40 @@ async def ai_endpoint(request: Request, ai_request: AIRequest):
             )
             
             simple_chain = simple_prompt | simple_chat_model
+            
+            # OpenAI API call for simple questions
+            openai_start_time = time.time()
+            timing_context.log_event("OPENAI_START", "Calling GPT-3.5-turbo for general query")
             response = simple_chain.invoke({"question": question})
+            timing_context.log_duration_event("OPENAI_END", openai_start_time, "General query completed")
             
             response_text = response.content if hasattr(response, "content") else str(response)
+            timing_context.log_response_ready(len(response_text))
             
-            # For simple factual questions, don't store at all (saves time and space)
+            # For simple factual questions, skip storage to save time
+            timing_context.log_event("STORAGE_SKIP", "Skipping storage for simple factual question")
             return {"answer": response_text}
             
         else:
-            # PATH 3: CONTEXTUAL GENERAL (needs conversation history)
+            timing_context.log_event("ROUTING_DECISION", "CONTEXTUAL_PATH")
             
-            # Retrieve history synchronously (needed for context)
+            # Context retrieval with detailed timing
             try:
+                context_start_time = time.time()
+                timing_context.log_event("CONTEXT_RETRIEVAL_START", "Retrieving conversation history")
                 relevant_messages = retrieve_relevant_messages(question, top_k=3)
+                timing_context.log_duration_event("CONTEXT_RETRIEVAL_END", context_start_time, 
+                                                f"Retrieved {len(relevant_messages)} relevant messages")
             except Exception as e:
+                timing_context.log_event("CONTEXT_ERROR", f"Failed to retrieve context: {str(e)}")
                 logging.error(f"Failed to retrieve conversation history: {e}")
-                relevant_messages = []  # Continue without history
+                relevant_messages = []
             
             history_messages = "\n".join(
                 f"{'User' if msg['type'] == 'human' else 'AI'}: {msg['content']}" for msg in relevant_messages
             )
             
-            # Use GPT-3.5-turbo for speed
+            timing_context.log_event("MODEL_PREP", "Setting up GPT-3.5-turbo for contextual query")
             contextual_chat_model = ChatOpenAI(
                 model="gpt-3.5-turbo",  # Faster than GPT-4
                 openai_api_key=OPENAI_API_KEY,
@@ -510,22 +578,49 @@ async def ai_endpoint(request: Request, ai_request: AIRequest):
                 "system_instruction": system_instruction,
             }
             
+            # OpenAI API call for contextual questions
+            openai_start_time = time.time()
+            timing_context.log_event("OPENAI_START", "Calling GPT-3.5-turbo for contextual query")
             response = contextual_chain.invoke(input_data)
+            timing_context.log_duration_event("OPENAI_END", openai_start_time, "Contextual query completed")
+            
             response_text = response.content if hasattr(response, "content") else str(response)
+            timing_context.log_response_ready(len(response_text))
             
             # Send response immediately
             response_data = {"answer": response_text}
             
-            # Store conversation in background (non-blocking)
+            # Store conversation in background (non-blocking) with logging
+            timing_context.log_event("BACKGROUND_STORAGE", "Queuing contextual conversation storage")
             asyncio.create_task(store_conversation_async(question, response_text))
             
             return response_data
         
+    except HTTPException:
+        # Re-raise HTTP exceptions without logging as errors
+        raise
     except Exception as e:
+        timing_context.log_event("ERROR", f"Unexpected error: {str(e)}")
         logging.error(f"AI API error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to process the AI request. Please try again later.")
 
+@app.on_event("startup")
+async def startup_event():
+    """Server startup event handler"""
+    logger.log_sync("SERVER", "STARTUP_COMPLETE", extra="InterOpera API Server is ready to accept requests")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Server shutdown event handler"""
+    logger.log_sync("SERVER", "SHUTDOWN_BEGIN", extra="InterOpera API Server shutting down")
+    try:
+        await logger.shutdown()
+        print("🔍 Server shutdown complete - all logs flushed")
+    except Exception as e:
+        print(f"Error during shutdown: {e}")
+
 if __name__ == "__main__":
+    logger.log_sync("SERVER", "STARTUP_UVICORN", extra="Starting Uvicorn server on 0.0.0.0:8000")
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
 
 

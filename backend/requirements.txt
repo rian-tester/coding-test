@@ -1,12 +1,9 @@
-# Core dependencies (already present)
 fastapi
 uvicorn
 python-dotenv
 openai
 pytest
 httpx
-
-# Missing dependencies
 langchain
 langchain-openai
 tiktoken
