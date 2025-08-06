@@ -5,3 +5,4 @@ backend/__pycache__/
 backend/.env
 backend/error.log
 backend/tests/__pycache__/
+References/
