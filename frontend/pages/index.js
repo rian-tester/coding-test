@@ -5,7 +5,8 @@ import Sidebar from "../components/Sidebar";
 import RepCard from "../components/RepCard";
 import Spinner from "../components/Spinner";
 import ChatBot from "../components/ChatBot";
-import AudioPlayer from "../components/AudioPlayer"; // Import the new AudioPlayer component
+import AudioPlayer from "../components/AudioPlayer";
+import conversationLogger from "../utils/logger"; // Import the new AudioPlayer component
 
 export default function Home() {
   const [users, setUsers] = useState([]);
@@ -23,6 +24,8 @@ export default function Home() {
     if (storedSoundSetting !== null) {
       setSoundEnabled(JSON.parse(storedSoundSetting));
     }
+    
+    conversationLogger.initializeSession();
   }, []);
 
   // Fetch data for dummy-data section
@@ -55,31 +58,40 @@ export default function Home() {
   const handleAskQuestion = async () => {
     if (question.trim() === "") return;
     setLoadingAI(true);
+    
+    const currentQuestion = question.trim();
+    
     try {
       const headers = {
         "Content-Type": "application/json",
-        "X-Session-ID": "unique-session-id", // Generate or retrieve a session ID
+        "X-Session-ID": "unique-session-id",
       };
 
       const response = await fetch("http://localhost:8000/api/ai", {
         method: "POST",
         headers,
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({ question: currentQuestion }),
       });
       const data = await response.json();
       console.log("AI Response:", data);
 
       if (data.answer) {
+        const aiAnswer = data.answer;
+        
         setAnswerHistory((prevHistory) => [
-          { question, answer: data.answer },
+          { question: currentQuestion, answer: aiAnswer },
           ...prevHistory,
         ]);
+        
+        await conversationLogger.logConversation(currentQuestion, aiAnswer);
       } else {
         console.error("No answer field in response:", data);
+        await conversationLogger.logError("No answer field in response", JSON.stringify(data));
       }
       setQuestion("");
     } catch (error) {
       console.error("Error in AI request:", error);
+      await conversationLogger.logError(error, "AI request failed");
     } finally {
       setLoadingAI(false);
     }
@@ -92,9 +104,13 @@ export default function Home() {
     }
   };
 
-  const handleClearChat = () => {
+  const handleClearChat = async () => {
     setAnswerHistory([]);
     setQuestion("");
+    
+    conversationLogger.sessionStarted = false;
+    conversationLogger.sessionId = conversationLogger.generateSessionId();
+    await conversationLogger.initializeSession();
   };
 
 

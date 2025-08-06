@@ -4,5 +4,7 @@ frontend/package-lock.json
 backend/__pycache__/
 backend/.env
 backend/error.log
+backend/api-log.txt
+frontend/conv-log.txt
 backend/tests/__pycache__/
 References/
