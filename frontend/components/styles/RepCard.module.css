@@ -105,7 +105,7 @@
 .sectionTitle {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--primary-accent);
+  color: #506680;
   margin: 0 0 0.75rem 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -118,7 +118,7 @@
 }
 
 .skillTag {
-  background: linear-gradient(135deg, var(--highlight-color), rgba(var(--highlight-color), 0.8));
+  background: linear-gradient(135deg, #DAA49A, #B8926F);
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 20px;
@@ -127,6 +127,8 @@
   text-transform: capitalize;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s ease;
+  border: none;
+  display: inline-block;
 }
 
 .skillTag:hover {
