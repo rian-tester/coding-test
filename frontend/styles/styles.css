@@ -39,6 +39,17 @@ body {
   animation: fadeIn 3s ease-in, bounce 4s ease-in-out; /* Add bounce animation */
 }
 
+/* Subtitle Styles */
+.title-bar .subtitle {
+  font-size: 1.1rem;
+  font-weight: 400;
+  margin: 0.5rem 0 0 0;
+  color: rgba(255, 255, 255, 0.9);
+  opacity: 0;
+  animation: fadeInDelayed 2s ease-in forwards;
+  animation-delay: 1s;
+}
+
 /* Layout Styles */
 .layout {
   display: flex;
@@ -130,6 +141,17 @@ body {
   }
   60% {
     transform: translateY(-5px);
+  }
+}
+
+@keyframes fadeInDelayed {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

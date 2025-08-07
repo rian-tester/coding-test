@@ -140,12 +140,16 @@ export default function Home() {
 
   return (
     <>
-      <Head />
+      <Head>
+        <title>Fitra Portfolio</title>
+        <meta name="description" content="Chat with our agentic AI to discuss sales rep data or other general discussion" />
+      </Head>
       <Background />
 
       <div className="layout">
         <div className="title-bar">
-          <h1>Demo Database AI enhanced Web App</h1>
+          <h1>Fitra Portfolio</h1>
+          <p className="subtitle">Chat with our agentic AI to discuss about sales rep data or other general discussion</p>
         </div>
 
         <div className="content-wrapper">
