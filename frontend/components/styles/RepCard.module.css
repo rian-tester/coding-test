@@ -1,152 +1,325 @@
-/* RepCard Component Styles */
-.rep-card {
-  border: 1px solid #ccc;
-  padding: 1rem;
-  border-radius: 8px;
-  background-color: rgba(45, 55, 72, 0.2); /* Match sidebar transparency */
-  margin: 1rem; /* Adjust margin for better spacing */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+  border: 1px solid rgba(var(--primary-accent), 0.2);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
   position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column; /* Stack content vertically by default */
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
-/* RepCard Header Styles */
-.rep-header {
-  font-size: 1.2rem;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 0.5rem;
-  background-color: rgba(45, 55, 72, 0.4); /* Match sidebar transparency */
-  padding: 0.5rem;
-  border-radius: 4px;
-  overflow: hidden; /* Prevent text overflow */
-  text-overflow: ellipsis; /* Add ellipsis for long text */
-  white-space: nowrap; /* Prevent text wrapping */
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+  border-color: var(--highlight-color);
 }
 
-/* RepCard Divider Styles */
-.divider {
-  margin: 1rem 0;
-  border: none;
-  border-top: 2px solid rgba(255, 255, 255, 0.2);
+.cardHeader {
+  margin-bottom: 1.5rem;
 }
 
-/* RepCard Content Styles */
-.rep-content {
+.profileSection {
   display: flex;
   align-items: center;
   gap: 1rem;
-  min-height: 75px;
-  background-color: rgba(45, 55, 72, 0.4); /* Match sidebar transparency */
-  padding: 0.5rem;
-  border-radius: 4px;
-  flex-wrap: wrap; /* Allow wrapping on smaller screens */
 }
 
-/* RepCard Image Styles */
-.rep-image {
-  flex: 0 0 30%; /* Fix the width to 30% */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: visible;
+.profileImage {
+  position: relative;
 }
 
-.sales-image {
-  max-width: 100%; /* Ensure the image scales properly */
-  max-height: 100%; /* Ensure the image scales properly */
-  object-fit: contain; 
-  border: 4px solid transparent; 
-  border-image-source: linear-gradient(90deg, #4a90e2, #50c878); /* Gradient border */
-  border-image-slice: 1; /* Use the entire gradient for the border */
+.avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--primary-accent);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* RepCard Details Styles */
-.rep-details {
-  flex: 1; /* Take up the remaining width */
+.profileInfo {
+  flex: 1;
+}
+
+.name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+  margin-bottom: 0.25rem;
+}
+
+.role {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin: 0;
+  font-weight: 500;
+}
+
+.statsSection {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, var(--secondary-accent), var(--primary-accent));
+  border-radius: 12px;
+  color: white;
+}
+
+.statItem {
+  text-align: center;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding: 0.25rem;
-  overflow: hidden; /* Prevent scrollbars */
+  gap: 0.25rem;
+  align-items: center;
 }
 
-.rep-details ul {
-  list-style-type: none;
-  padding: 0.5rem; 
-  margin: 0;
-  background-color: rgba(45, 55, 72, 0.4); /* Match sidebar transparency */
-  border-radius: 4px;
-  word-wrap: break-word; /* Break long words */
-  word-break: break-word; /* Ensure long words break properly */
-}
-
-.rep-details li {
+.statIcon {
+  font-size: 1.5rem;
   margin-bottom: 0.25rem;
-  color: #fff; /* Ensure text is readable */
-  overflow: hidden; /* Prevent text overflow */
-  white-space: normal; /* Allow text to wrap */
 }
 
-/* Deals Section */
-.deal-item {
-  background-color: rgba(45, 55, 72, 0.6); /* Match transparency */
-  padding: 0.5rem;
-  border-radius: 4px;
-  margin-bottom: 0.25rem;
-  color: #fff; /* Ensure text is readable */
-  font-size: 0.9rem; /* Slightly smaller font size */
+.statNumber {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.skillsSection {
+  margin-bottom: 1.5rem;
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #506680;
+  margin: 0 0 0.75rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.skillsList {
   display: flex;
-  justify-content: space-between; /* Align text to the left and right */
-  align-items: center; /* Center vertically */
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); /* Subtle shadow */
-  overflow: hidden; /* Prevent text overflow */
-  white-space: normal; /* Allow text to wrap */
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
-.deal-item span {
-  font-weight: bold; /* Highlight important text */
+.skillTag {
+  background: linear-gradient(135deg, var(--highlight-color), var(--secondary-accent));
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, background 0.3s ease;
+  border: none;
+  display: inline-block;
 }
 
-.deal-item.closed-won {
-  background-color: rgba(50, 205, 50, 0.8); /* Green for Closed Won */
+.skillTag:hover {
+  transform: translateY(-1px);
 }
 
-.deal-item.pending {
-  background-color: rgba(255, 165, 0, 0.8); /* Orange for Pending */
+.expandedContent {
+  border-top: 1px solid rgba(var(--primary-accent), 0.2);
+  padding-top: 1.5rem;
+  margin-top: 1rem;
+  animation: expandIn 0.3s ease;
 }
 
-.deal-item.closed-lost {
-  background-color: rgba(220, 20, 60, 0.8); /* Red for Closed Lost */
+@keyframes expandIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* Media Queries for Smaller Screens */
+.dealsSection,
+.clientsSection {
+  margin-bottom: 1.5rem;
+}
+
+.dealsList,
+.clientsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dealItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.5);
+  border-left: 4px solid;
+}
+
+.dealWon {
+  border-left-color: #22c55e;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));
+}
+
+.dealProgress {
+  border-left-color: #f59e0b;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05));
+}
+
+.dealLost {
+  border-left-color: #ef4444;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+}
+
+.dealInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dealClient {
+  font-weight: 600;
+  color: var(--text-main);
+  font-size: 0.875rem;
+}
+
+.dealValue {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.dealStatus {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dealWon .dealStatus {
+  background: #22c55e;
+  color: white;
+}
+
+.dealProgress .dealStatus {
+  background: #f59e0b;
+  color: white;
+}
+
+.dealLost .dealStatus {
+  background: #ef4444;
+  color: white;
+}
+
+.clientItem {
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  border-left: 4px solid var(--secondary-accent);
+}
+
+.clientInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.clientName {
+  font-weight: 600;
+  color: var(--text-main);
+  font-size: 0.875rem;
+}
+
+.clientIndustry {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.clientContact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.clientEmail,
+.clientPhone {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.expandIcon {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  width: 32px;
+  height: 32px;
+  background: var(--highlight-color);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.iconUp,
+.iconDown {
+  color: white;
+  font-size: 0.875rem;
+  font-weight: bold;
+  transition: transform 0.3s ease;
+}
+
+.card:hover .expandIcon {
+  transform: scale(1.1);
+}
+
 @media (max-width: 768px) {
-  .rep-card {
-    flex-direction: column; /* Stack content vertically */
+  .statsSection {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .card {
+    padding: 1rem;
+    margin: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .statNumber {
+    font-size: 1.25rem;
   }
 
-  .rep-content {
-    flex-direction: column; /* Stack image and details vertically */
-    align-items: flex-start; /* Align items to the left */
+  .skillsList {
+    gap: 0.375rem;
   }
 
-  .rep-image {
-    flex: 0 0 auto; /* Allow the image to resize dynamically */
-    margin-bottom: 1rem; /* Add spacing below the image */
-  }
-
-  .rep-header {
-    font-size: 1rem; /* Reduce font size for smaller screens */
-  }
-
-  .deal-item {
-    font-size: 0.8rem; /* Reduce font size for smaller screens */
-  }
-
-  .rep-details {
-    padding: 0.5rem; /* Add padding for smaller screens */
+  .skillTag {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8rem;
   }
 }

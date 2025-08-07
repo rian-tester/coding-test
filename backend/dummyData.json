@@ -12,8 +12,8 @@
           { "client": "Omega Inc", "value": 85000, "status": "Closed Lost" }
         ],
         "clients": [
-          { "name": "Acme Corp", "industry": "Manufacturing", "contact": "alice@acmecorp.com" },
-          { "name": "Beta Ltd", "industry": "Retail", "contact": "contact@betaltd.com" }
+          { "id": 1, "name": "Acme Corp", "industry": "Manufacturing", "contact": { "email": "alice@acmecorp.com", "phone": "+1-555-0101" } },
+          { "id": 2, "name": "Beta Ltd", "industry": "Retail", "contact": { "email": "contact@betaltd.com", "phone": "+1-555-0102" } }
         ]
       },
       {
@@ -28,8 +28,8 @@
           { "client": "Sigma Corp", "value": 65000, "status": "In Progress" }
         ],
         "clients": [
-          { "name": "Gamma Inc", "industry": "Tech", "contact": "info@gammainc.com" },
-          { "name": "Delta LLC", "industry": "Finance", "contact": "support@deltallc.com" }
+          { "id": 3, "name": "Gamma Inc", "industry": "Tech", "contact": { "email": "info@gammainc.com", "phone": "+44-20-7946-0958" } },
+          { "id": 4, "name": "Delta LLC", "industry": "Finance", "contact": { "email": "support@deltallc.com", "phone": "+44-20-7946-0959" } }
         ]
       },
       {
@@ -44,8 +44,8 @@
           { "client": "Theta Enterprises", "value": 70000, "status": "Closed Lost" }
         ],
         "clients": [
-          { "name": "Epsilon Ltd", "industry": "Healthcare", "contact": "contact@epsilonltd.com" },
-          { "name": "Zeta Corp", "industry": "Finance", "contact": "sales@zetacorp.com" }
+          { "id": 5, "name": "Epsilon Ltd", "industry": "Healthcare", "contact": { "email": "contact@epsilonltd.com", "phone": "+61-2-9374-4000" } },
+          { "id": 6, "name": "Zeta Corp", "industry": "Finance", "contact": { "email": "sales@zetacorp.com", "phone": "+61-2-9374-4001" } }
         ]
       },
       {
@@ -60,8 +60,8 @@
           { "client": "Iota Group", "value": 55000, "status": "Closed Lost" }
         ],
         "clients": [
-          { "name": "Eta Co", "industry": "Energy", "contact": "info@etaco.com" },
-          { "name": "Theta Inc", "industry": "Telecommunications", "contact": "sales@thetainc.com" }
+          { "id": 7, "name": "Eta Co", "industry": "Energy", "contact": { "email": "info@etaco.com", "phone": "+55-11-3040-3000" } },
+          { "id": 8, "name": "Theta Inc", "industry": "Telecommunications", "contact": { "email": "sales@thetainc.com", "phone": "+55-11-3040-3001" } }
         ]
       },
       {
@@ -76,8 +76,8 @@
           { "client": "Lambda Partners", "value": 105000, "status": "Closed Lost" }
         ],
         "clients": [
-          { "name": "Iota Ltd", "industry": "Hospitality", "contact": "contact@iotaltd.com" },
-          { "name": "Kappa LLC", "industry": "Retail", "contact": "info@kappallc.com" }
+          { "id": 9, "name": "Iota Ltd", "industry": "Hospitality", "contact": { "email": "contact@iotaltd.com", "phone": "+971-4-329-3000" } },
+          { "id": 10, "name": "Kappa LLC", "industry": "Retail", "contact": { "email": "info@kappallc.com", "phone": "+971-4-329-3001" } }
         ]
       }
     ]
