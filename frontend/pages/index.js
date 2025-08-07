@@ -6,6 +6,7 @@ import RepCard from "../components/RepCard";
 import Spinner from "../components/Spinner";
 import ChatBot from "../components/ChatBot";
 import AudioPlayer from "../components/AudioPlayer";
+import ThemeToggle from "../components/ThemeToggle";
 import conversationLogger from "../utils/logger"; // Import the new AudioPlayer component
 
 export default function Home() {
@@ -148,8 +149,13 @@ export default function Home() {
 
       <div className="layout">
         <div className="title-bar">
-          <h1>Fitra Portfolio</h1>
-          <p className="subtitle">Chat with our agentic AI to discuss about sales rep data or other general discussion</p>
+          <div className="title-content">
+            <h1>Fitra Portfolio</h1>
+            <p className="subtitle">Chat with our agentic AI to discuss about sales rep data or other general discussion</p>
+          </div>
+          <div className="title-controls">
+            <ThemeToggle />
+          </div>
         </div>
 
         <div className="content-wrapper">

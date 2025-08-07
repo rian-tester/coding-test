@@ -1,0 +1,65 @@
+.themeToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+}
+
+.toggleButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.2s ease;
+}
+
+.toggleButton:hover {
+  transform: scale(1.05);
+}
+
+.toggleButton:focus {
+  outline: 2px solid var(--highlight-color);
+  outline-offset: 2px;
+  border-radius: 20px;
+}
+
+.toggleTrack {
+  width: 50px;
+  height: 24px;
+  background: var(--secondary-accent);
+  border-radius: 12px;
+  position: relative;
+  transition: background-color 0.3s ease;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.toggleThumb {
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggleThumb.active {
+  transform: translateX(26px);
+}
+
+.toggleIcon {
+  font-size: 10px;
+  line-height: 1;
+}
+
+.themeLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-main);
+  user-select: none;
+}
