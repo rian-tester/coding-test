@@ -5,6 +5,11 @@
   --highlight-color: #DAA49A;
   --text-main: #2E2E2E;
   --text-muted: #6E6E6E;
+  
+  /* RGB versions for transparency effects */
+  --primary-accent-rgb: 80, 102, 128;
+  --secondary-accent-rgb: 143, 168, 200;
+  --highlight-color-rgb: 218, 164, 154;
 }
 
 body {

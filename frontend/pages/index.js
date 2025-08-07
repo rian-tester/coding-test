@@ -10,7 +10,6 @@ import conversationLogger from "../utils/logger"; // Import the new AudioPlayer 
 export default function Home() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingAI, setLoadingAI] = useState(false);
   const [question, setQuestion] = useState("");
   const [answerHistory, setAnswerHistory] = useState([]);
   const [activeSection, setActiveSection] = useState("dummy-data");
@@ -145,7 +144,6 @@ export default function Home() {
                   question={question}
                   setQuestion={setQuestion}
                   answerHistory={answerHistory}
-                  loadingAI={loadingAI}
                   addAnswerToHistory={addAnswerToHistory}
                   handleClearChat={handleClearChat}
                 />

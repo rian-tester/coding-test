@@ -12,18 +12,23 @@ function MarkdownRenderer({ content }) {
 }
 
 function CircularProgress({ progress, onStop, isProcessing }) {
+  // Calculate strokeDashoffset for emptying circle (reverse of filling)
+  const radius = 10;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (circumference * progress) / 100;
+  
   return (
     <div className={styles["circular-progress-container"]}>
       <svg className={styles["circular-progress"]} width="24" height="24" viewBox="0 0 24 24">
         <circle
           cx="12"
           cy="12"
-          r="10"
+          r={radius}
           fill="none"
           stroke="var(--secondary-accent)"
           strokeWidth="2"
-          strokeDasharray="62.83"
-          strokeDashoffset={62.83 - (62.83 * progress) / 100}
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
           className={styles["progress-circle"]}
         />
       </svg>
@@ -66,6 +71,8 @@ export default function ChatBot({
   const [processingTime, setProcessingTime] = useState(0);
   const [routeInfo, setRouteInfo] = useState("");
   const [showTyping, setShowTyping] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const abortControllerRef = useRef(null);
 
   useEffect(() => {
     if (responseContainerRef.current) {
@@ -88,15 +95,15 @@ export default function ChatBot({
   const simulateProgress = (routeType) => {
     const stages = routeType === "sales" 
       ? [
-          { status: "Analyzing question...", progress: 15, delay: 300 },
-          { status: "Route decision: sales", progress: 30, delay: 200 },
-          { status: "Searching sales data...", progress: 50, delay: 400 },
-          { status: "Generating response...", progress: 80, delay: 600 }
+          { status: "Analyzing question...", progress: 80, delay: 300 },
+          { status: "Route decision: sales", progress: 60, delay: 200 },
+          { status: "Searching sales data...", progress: 40, delay: 400 },
+          { status: "Generating response...", progress: 20, delay: 600 }
         ]
       : [
-          { status: "Analyzing question...", progress: 20, delay: 400 },
-          { status: "Route decision: general", progress: 40, delay: 300 },
-          { status: "Processing general question...", progress: 70, delay: 800 }
+          { status: "Analyzing question...", progress: 70, delay: 400 },
+          { status: "Route decision: general", progress: 50, delay: 300 },
+          { status: "Processing general question...", progress: 25, delay: 800 }
         ];
 
     stages.forEach((stage, index) => {
@@ -111,20 +118,22 @@ export default function ChatBot({
   };
 
   const enhancedHandleAskQuestion = async () => {
-    if (question.trim() === "") return;
+    if (question.trim() === "" || isProcessing) return;
     
+    setIsProcessing(true);
     setProcessingStatus("Starting...");
-    setProgress(5);
+    setProgress(100); // Start with full circle
     setProcessingTime(0);
     setRouteInfo("");
     setShowTyping(true);
     
     const currentQuestion = question.trim();
+    abortControllerRef.current = new AbortController();
     const startTime = Date.now();
     
     try {
       setProcessingStatus("Analyzing question...");
-      setProgress(10);
+      setProgress(90); // Gradually decrease
       
       const response = await fetch("http://localhost:8000/api/ai", {
         method: "POST",
@@ -132,6 +141,7 @@ export default function ChatBot({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ question: currentQuestion }),
+        signal: abortControllerRef.current.signal,
       });
       
       if (!response.ok) {
@@ -147,7 +157,7 @@ export default function ChatBot({
       setTimeout(() => {
         const { status, progress: finalProgress, time, route } = parseStatusFromResponse(data);
         setProcessingStatus("Complete");
-        setProgress(100);
+        setProgress(0); // End with empty circle
         setProcessingTime(totalTime);
         setRouteInfo(route);
 
@@ -159,6 +169,7 @@ export default function ChatBot({
         
         setQuestion("");
         setShowTyping(false);
+        setIsProcessing(false);
         
         setTimeout(() => {
           setProcessingStatus("");
@@ -170,17 +181,23 @@ export default function ChatBot({
 
     } catch (error) {
       setShowTyping(false);
-      console.error("Error in AI request:", error);
-      setProcessingStatus("Error occurred");
+      setIsProcessing(false);
       
-      // Log the error
-      conversationLogger.logError(error, "AI request failed").catch(console.error);
-      
-      if (typeof addAnswerToHistory === 'function') {
-        addAnswerToHistory(
-          currentQuestion, 
-          "I apologize, but there was an error processing your request. Please try again."
-        );
+      if (error.name === 'AbortError') {
+        setProcessingStatus("Stopped by user");
+      } else {
+        console.error("Error in AI request:", error);
+        setProcessingStatus("Error occurred");
+        
+        // Log the error
+        conversationLogger.logError(error, "AI request failed").catch(console.error);
+        
+        if (typeof addAnswerToHistory === 'function') {
+          addAnswerToHistory(
+            currentQuestion, 
+            "I apologize, but there was an error processing your request. Please try again."
+          );
+        }
       }
       
       setQuestion("");
@@ -194,8 +211,10 @@ export default function ChatBot({
   };
 
   const handleStop = () => {
-    // Stop functionality would need to be implemented in the parent component
-    // For now, just reset the UI state
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    setIsProcessing(false);
     setShowTyping(false);
     setProcessingStatus("Stopped by user");
     setTimeout(() => {
@@ -207,13 +226,17 @@ export default function ChatBot({
   };
 
   const enhancedHandleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey && question.trim() !== "" && !loadingAI) {
+    if (e.key === "Enter" && !e.shiftKey && question.trim() !== "" && !isProcessing) {
       e.preventDefault();
       enhancedHandleAskQuestion();
     }
   };
 
   const enhancedHandleClearChat = async () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    setIsProcessing(false);
     setProcessingStatus("");
     setProgress(0);
     setProcessingTime(0);
@@ -276,15 +299,15 @@ export default function ChatBot({
           onChange={(e) => setQuestion(e.target.value)}
           onKeyDown={enhancedHandleKeyDown}
           className={styles["message-input"]}
-          disabled={loadingAI}
+          disabled={isProcessing}
           autoComplete="off"
         />
         <button
           type="submit"
-          className={`${styles["send-button"]} ${loadingAI ? styles.loading : ""}`}
-          disabled={!question.trim() && !loadingAI}
+          className={`${styles["send-button"]} ${isProcessing ? styles.loading : ""}`}
+          disabled={(!question.trim() && !isProcessing) || isProcessing}
         >
-          {loadingAI ? (
+          {isProcessing ? (
             <CircularProgress 
               progress={progress} 
               onStop={handleStop} 

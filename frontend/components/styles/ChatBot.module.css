@@ -194,7 +194,7 @@
   align-items: center;
   justify-content: center;
   color: var(--primary-accent);
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition: color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
   border-radius: 50%;
   width: 48px;
   height: 48px;
@@ -202,6 +202,8 @@
 
 .send-button.loading {
   animation: none;
+  background-color: rgba(var(--primary-accent-rgb), 0.1);
+  cursor: not-allowed;
 }
 
 .send-button:disabled {
@@ -209,9 +211,15 @@
   color: var(--text-muted);
 }
 
-.send-button:hover:not(:disabled) {
+.send-button:disabled.loading {
+  color: var(--primary-accent);
+  background-color: rgba(var(--primary-accent-rgb), 0.1);
+}
+
+.send-button:hover:not(:disabled):not(.loading) {
   color: var(--highlight-color);
   transform: scale(1.05);
+  background-color: rgba(var(--primary-accent-rgb), 0.05);
 }
 
 .circular-progress-container {
@@ -225,10 +233,13 @@
 
 .circular-progress {
   transform: rotate(-90deg);
+  filter: drop-shadow(0 0 2px rgba(var(--primary-accent-rgb), 0.3));
 }
 
 .progress-circle {
-  transition: stroke-dashoffset 0.3s ease;
+  transition: stroke-dashoffset 0.5s ease-out;
+  stroke: var(--primary-accent);
+  stroke-linecap: round;
 }
 
 .stop-button {
@@ -239,23 +250,26 @@
   background: var(--primary-accent);
   border: none;
   border-radius: 2px;
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   cursor: pointer;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 }
 
 .stop-button:hover {
   background: var(--highlight-color);
+  transform: translate(-50%, -50%) scale(1.1);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
 }
 
 .stop-button svg {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 
 @media (max-width: 768px) {
