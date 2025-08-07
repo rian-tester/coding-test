@@ -1,45 +1,73 @@
-/* General Styles */
+:root {
+  --bg-color: #F4F4F9;
+  --primary-accent: #506680;
+  --secondary-accent: #8FA8C8;
+  --highlight-color: #DAA49A;
+  --text-main: #2E2E2E;
+  --text-muted: #6E6E6E;
+  
+  /* RGB versions for transparency effects */
+  --primary-accent-rgb: 80, 102, 128;
+  --secondary-accent-rgb: 143, 168, 200;
+  --highlight-color-rgb: 218, 164, 154;
+}
+
 body {
   font-family: 'Poppins', sans-serif;
-  background-color: #1a202c; /* Dark background */
-  color: #ffffff; /* White text */
-  margin: 0; /* Remove default margin */
-  overflow: hidden; /* Prevent body from scrolling */
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  margin: 0;
+  overflow: hidden;
+  overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Container */
 .container {
-  position: relative; /* Ensure proper stacking context */
-  min-height: 100vh; /* Stretch to full viewport height */
-  width: 100%; /* Stretch to full viewport width */
-  padding: 2rem; /* Add padding inside the container */
-  background-color: rgba(0, 0, 0, 0.1); /* Background color */
-  border-radius: 8px; /* Rounded corners */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Add shadow */
-  box-sizing: border-box; /* Include padding in width/height calculations */
-  z-index: 1; /* Place above the particle background */
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  padding: 2rem;
+  background-color: var(--bg-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+  z-index: 1;
+  transition: background-color 0.3s ease;
+  overflow-x: hidden;
 }
 
-/* Title Bar */
 .title-bar {
-  width: 100%; /* Full width */
-  background: linear-gradient(90deg, #4a90e2, #50c878);
-  padding: 1rem;
-  text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   z-index: 10;
+  transition: background 0.3s ease;
 }
 
-/* Title Bar Text */
+.title-content {
+  flex: 1;
+  text-align: center;
+}
+
+.title-controls {
+  position: absolute;
+  right: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
 .title-bar h1 {
   font-size: 2.5rem;
   font-weight: 700;
   margin: 0;
   color: white;
-  animation: fadeIn 3s ease-in, bounce 4s ease-in-out; /* Add bounce animation */
+  animation: fadeIn 3s ease-in, bounce 4s ease-in-out;
 }
 
-/* Subtitle Styles */
 .title-bar .subtitle {
   font-size: 1.1rem;
   font-weight: 400;
@@ -50,61 +78,80 @@ body {
   animation-delay: 1s;
 }
 
-/* Layout Styles */
 .layout {
   display: flex;
-  flex-direction: column; /* Stack title bar on top */
-  height: 100vh; /* Full viewport height */
-  overflow: hidden; /* Prevent body from scrolling */
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  overflow-x: hidden;
+  max-width: 100vw;
+  box-sizing: border-box;
 }
-
-
-/* Section Headers */
-.section-header {
-  cursor: pointer;
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 1rem; /* Add spacing below the H2 title */
-}
-
-/* Color for section headers */
-.section-header.blue,
-.section-header.green {
-  color: #4a90e2; /* Use blue for both */
-}
-
-/* Gradient border below H2 titles */
-.section-header::after {
-  content: ""; /* Empty content for the pseudo-element */
-  display: block;
-  width: 100%; /* Full width */
-  height: 4px; /* Same thickness as the image border */
-  margin-top: 0.5rem; /* Add spacing between the title and the border */
-  background: linear-gradient(90deg, #4a90e2, #50c878); /* Gradient color */
-  border-radius: 2px; /* Slightly rounded corners */
-}
-
 
 /* Content Wrapper */
 .content-wrapper {
   display: flex;
-  flex: 1 1; /* Take up remaining space below the title */
-  overflow: hidden; /* Prevent horizontal scrolling */
+  flex: 1 1;
+  overflow: hidden;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
-/* Main Content Styles */
 .main-content {
-  flex: 1 1; /* Take up remaining horizontal space */
+  flex: 1 1;
   padding: 2rem;
-  overflow-x: hidden; /* Prevent horizontal scrolling */
-  box-sizing: border-box; /* Include padding in width calculations */
-  height: calc(100vh - 4rem); /* Adjust height to fit within the viewport */
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+  height: calc(100vh - 120px);
+  background-color: var(--bg-color);
+  transition: background-color 0.3s ease;
+  max-width: 100%;
+}
+
+.section-header {
+  cursor: pointer;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--primary-accent);
+  transition: color 0.3s ease;
+}
+
+.section-header::after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 4px;
+  margin-top: 0.5rem;
+  background: linear-gradient(90deg, var(--primary-accent), var(--secondary-accent));
+  border-radius: 2px;
+  transition: background 0.3s ease;
 }
 
 /* Dummy section scrolls */
 .dummy-section-wrapper {
   height: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.cards-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .cards-grid {
+    gap: 0.5rem;
+  }
 }
 
 /* AI section does NOT scroll */
