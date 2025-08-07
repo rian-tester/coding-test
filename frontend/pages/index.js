@@ -107,7 +107,7 @@ export default function Home() {
         <div className="title-bar">
           <div className="title-content">
             <h1>Fitra Portfolio</h1>
-            <p className="subtitle">Chat with our agentic AI to discuss about sales rep data or other general discussion</p>
+            <p className="subtitle">Powered with OpenAI api and advanced RAG system</p>
           </div>
         </div>
 
