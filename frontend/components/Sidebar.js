@@ -35,14 +35,14 @@ export default function Sidebar({ isDocked, onToggleDock, onNavigate, soundEnabl
 
       <div className={styles.sidebarFooter}>
         <div className={styles.controlsSection}>
+          {!isDocked && <div className={styles.settingsDivider}></div>}
           {!isDocked && <h5 className={styles.controlsTitle}>Settings</h5>}
           
           <div className={styles.controlItem}>
             <span className={styles.controlIcon}>🎨</span>
             {!isDocked && (
               <div className={styles.controlContent}>
-                <span className={styles.controlLabel}>Theme</span>
-                <ThemeToggle />
+                <ThemeToggle showNameOnly={true} />
               </div>
             )}
           </div>
