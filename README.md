@@ -42,27 +42,24 @@ Current implementation features:
 
 ### Frontend Evolution
 
-#### Phase 1: Basic Sales Dashboard
+#### Phase 1: Basic Sales Dashboard (V1)
 The initial frontend was a simple data display:
 - Basic sales representative cards layout
 - Simple data fetching and display
 - Minimal styling and basic responsiveness
 
 **Sales Dashboard V1:**
-![Sales Dashboard V1](./Readme/Fitra%20portfolio%20frontend%20V1.png)
+![Sales Dashboard V1](./Readme/Fitra%20portfolio%20V1%20sales.png)
 
 **Chat Section V1:**
-![Chat Section V1](./Readme/Fitra%20portfolio%20part%202%20chat%20part%201.png)
+![Chat Section V1](./Readme/Fitra%20portfolio%20V1%20Chat.png)
 
-#### Phase 2: Modern UI Transformation
-Redesigned the entire user experience:
+#### Phase 2: Modern UI Transformation (V2)
+Complete frontend style revamp with enhanced user experience:
 - **Elegant Design System**: Transformed from basic dashboard to modern, elegant interface
 - **Simplified Layout**: Clean, minimalist design focusing on usability and visual hierarchy
 - **Advanced Styling**: Professional gradient backgrounds, smooth animations, and modern typography
-- **Theme Integration**: Consistent dark theme with carefully chosen color palettes
-
-#### Phase 3: Enhanced User Experience
-Current implementation showcases:
+- **Theme Integration**: Consistent themes with carefully chosen color palettes
 - **Modern Dashboard Layout**: Completely refactored dashboard with improved visual organization
 - **Brand New Chat Interface**: Redesigned chat section with bubble-style conversations and markdown support
 - **Intelligent Frontend-Backend Integration**: Updated frontend logic to seamlessly work with new AI routing system
@@ -71,12 +68,12 @@ Current implementation showcases:
 - **Responsive Architecture**: Mobile-first design ensuring perfect functionality across all device sizes
 
 **Sales Dashboard V2:**
-![Sales Dashboard V2 - Card View](./Readme/Fitra%20portfolio%20V1%20sales%20data.png)
-![Sales Dashboard V2 - Stats View](./Readme/Fitra%20portfolio%20V2%20sales%20part%201.png)
-![Sales Dashboard V2 - Detailed View](./Readme/fitra%20portfolio%20V2%20sales%20part%202.png)
+![Sales Dashboard V2 - Part 1](./Readme/Fitra%20portfolio%20V2%20sales%20part%201.png)
+![Sales Dashboard V2 - Part 2](./Readme/fitra%20portfolio%20V2%20sales%20part%202.png)
 
 **Chat Section V2:**
-![Chat Section V2 - Interface](./Readme/Fitra%20portfolio%20V2%20chat%20part%202.png)
+![Chat Section V2 - Part 1](./Readme/Fitra%20portfolio%20V2%20char%20part%201.png)
+![Chat Section V2 - Part 2](./Readme/Fitra%20portfolio%20V2%20chat%20part%202.png)
 
 ### Technical Implementation Details
 
@@ -107,12 +104,18 @@ Do this at least once in the first time to run the project:
 
 #### Backend Setup
 
-1. Copy the `.env` file in the **root of the `backend` folder**  
-   This is required for the AI API to work.
+1. **Setup OpenAI API Key** in the **root of the `backend` folder**  
+   Create a `.env` file with your OpenAI API key:
 
-    - The `.env` file contains the OpenAI API key created specifically for this project.
-    - It can be found in the email I sent you along with the repository link.
-    - The key will be deleted after **two weeks** from submission, making it safe for temporary use.
+   ```
+   OPENAI_API_KEY=your_openai_api_key_here
+   ```
+
+   **For Visitors/Users:**
+   - Please provide your own OpenAI API key and add it to the `.env` file with the variable name `OPENAI_API_KEY=`
+
+   **For Interviewers:**
+   - If you are an interviewer and need a temporary API key for testing, please email me at: **fitransyah.rusman@gmail.com**
 
 
 2. Navigate to the `backend` directory  

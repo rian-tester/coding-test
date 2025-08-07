@@ -23,8 +23,8 @@ app = FastAPI(
     version="2.0.0",
     contact={
         "name": "Fitra Portofolio Support",
-        "url": "http://example.com/contact/",
-        "email": "support@example.com",
+        "url": "https://discovered-squid-75f.notion.site/Web-Development-23c360f8e997809daa99ed4a584996e1",
+        "email": "fitransyah.rusman@gmail.com",
     },
     license_info={
         "name": "MIT License",
