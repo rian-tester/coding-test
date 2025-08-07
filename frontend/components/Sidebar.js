@@ -1,7 +1,9 @@
 import React from "react";
 import styles from "./styles/Sidebar.module.css";
+import ThemeToggle from "./ThemeToggle";
+import AudioPlayer from "./AudioPlayer";
 
-export default function Sidebar({ isDocked, onToggleDock, onNavigate }) {
+export default function Sidebar({ isDocked, onToggleDock, onNavigate, soundEnabled, setSoundEnabled }) {
   const menuItems = [
     { key: "dummy-data", icon: "📊", label: "Sales Dashboard", shortLabel: "Sales" },
     { key: "ai-section", icon: "🤖", label: "AI Assistant", shortLabel: "AI" }
@@ -30,6 +32,35 @@ export default function Sidebar({ isDocked, onToggleDock, onNavigate }) {
           </button>
         ))}
       </nav>
+
+      <div className={styles.sidebarFooter}>
+        <div className={styles.controlsSection}>
+          {!isDocked && <h5 className={styles.controlsTitle}>Settings</h5>}
+          
+          <div className={styles.controlItem}>
+            <span className={styles.controlIcon}>🎨</span>
+            {!isDocked && (
+              <div className={styles.controlContent}>
+                <span className={styles.controlLabel}>Theme</span>
+                <ThemeToggle />
+              </div>
+            )}
+          </div>
+
+          <div className={styles.controlItem}>
+            <span className={styles.controlIcon}>🔊</span>
+            {!isDocked && (
+              <div className={styles.controlContent}>
+                <span className={styles.controlLabel}>Sound</span>
+                <AudioPlayer
+                  soundEnabled={soundEnabled}
+                  setSoundEnabled={setSoundEnabled}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

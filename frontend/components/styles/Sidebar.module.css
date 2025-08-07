@@ -95,4 +95,67 @@
 
 .sidebar.docked .navLabel {
   display: none;
+}
+
+.sidebarFooter {
+  border-top: 1px solid rgba(var(--primary-accent), 0.1);
+  padding: 0.75rem;
+  margin-top: auto;
+}
+
+.controlsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.controlsTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 0 0 0.25rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.controlItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+}
+
+.controlItem:hover {
+  background: rgba(var(--primary-accent), 0.05);
+}
+
+.controlIcon {
+  font-size: 1rem;
+  min-width: 16px;
+  text-align: center;
+}
+
+.controlContent {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.controlLabel {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+.sidebar.docked .controlsTitle,
+.sidebar.docked .controlContent {
+  display: none;
+}
+
+.sidebar.docked .controlItem {
+  justify-content: center;
+  padding: 0.75rem 0;
 }  
