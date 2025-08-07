@@ -15,6 +15,85 @@ In the future, I plan to extend this portfolio to include my skills in CI/CD, co
 
 ---
 
+## Project Evolution & Technical Progression
+
+### Backend Evolution
+
+#### Phase 1: Basic Implementation
+Initially, the backend started with a simple approach:
+- **Basic RAG Implementation**: Manual keyword matching and simple OpenAI API calls
+- **Hardcoded Routing**: Direct conditional logic to determine whether a question was sales-related or general
+- **Limited Context Awareness**: No memory or conversation history
+
+#### Phase 2: Advanced AI Routing
+The backend evolved to implement sophisticated AI-powered routing:
+- **Intelligent Question Classification**: Replaced manual keyword matching with AI-powered analysis using GPT models
+- **Dynamic Routing System**: Implemented `AIRouter` service that intelligently categorizes questions as sales or general queries
+- **Confidence-Based Decision Making**: Added confidence scoring to ensure accurate routing decisions
+- **Modular Architecture**: Separated concerns into distinct services (`AIRouter`, `RAGService`, `ChatService`, `DataService`)
+
+#### Phase 3: Enhanced RAG & Memory
+Current implementation features:
+- **Advanced RAG Pipeline**: Sophisticated retrieval-augmented generation with context-aware responses
+- **Conversation Memory**: Session-based memory management for contextual conversations
+- **Performance Optimization**: Comprehensive logging and timing analysis for request optimization
+- **Error Handling**: Robust error management with graceful fallbacks
+- **API Documentation**: Complete Swagger/OpenAPI documentation with detailed examples
+
+### Frontend Evolution
+
+#### Phase 1: Basic Sales Dashboard
+The initial frontend was a simple data display:
+- Basic sales representative cards layout
+- Simple data fetching and display
+- Minimal styling and basic responsiveness
+
+**Sales Dashboard V1:**
+![Sales Dashboard V1](https://drive.google.com/uc?export=view&id=1KYYUIK0lAWsuqsgq5uFRs5UOOuVzcVpd)
+
+**Chat Section V1:**
+![Chat Section V1](https://drive.google.com/uc?export=view&id=1y15DehmA8ICiVpTT5EF4SK-n2fodb2-G)
+
+#### Phase 2: Modern UI Transformation
+Redesigned the entire user experience:
+- **Elegant Design System**: Transformed from basic dashboard to modern, elegant interface
+- **Simplified Layout**: Clean, minimalist design focusing on usability and visual hierarchy
+- **Advanced Styling**: Professional gradient backgrounds, smooth animations, and modern typography
+- **Theme Integration**: Consistent dark theme with carefully chosen color palettes
+
+#### Phase 3: Enhanced User Experience
+Current implementation showcases:
+- **Modern Dashboard Layout**: Completely refactored dashboard with improved visual organization
+- **Brand New Chat Interface**: Redesigned chat section with bubble-style conversations and markdown support
+- **Intelligent Frontend-Backend Integration**: Updated frontend logic to seamlessly work with new AI routing system
+- **Real-time Statistics**: Dynamic stats and information pulled directly from backend APIs
+- **Interactive Components**: New circular button designs and intuitive navigation elements
+- **Responsive Architecture**: Mobile-first design ensuring perfect functionality across all device sizes
+
+**Sales Dashboard V2:**
+![Sales Dashboard V2 - Main View](https://drive.google.com/uc?export=view&id=1B1sIJhjILfqkZOPuUJzXP4RNEXsX-fWh)
+![Sales Dashboard V2 - Alternative View](https://drive.google.com/uc?export=view&id=11EtkkU6XAfc3cSGW2HOm12HwqW5QX6m5)
+
+**Chat Section V2:**
+![Chat Section V2 - Interface](https://drive.google.com/uc?export=view&id=1JnMCEkdkyTK2PCBKtCR1Fg4Qo9S48Ja4)
+![Chat Section V2 - Conversation Flow](https://drive.google.com/uc?export=view&id=1iTREZV5wu_J2yv_09L6wXvABgveRaOa3)
+
+### Technical Implementation Details
+
+#### Backend Architecture
+- **Microservice-Like Structure**: Cleanly separated services for different functionalities
+- **Advanced AI Integration**: Multiple AI strategies (RAG, general chat, routing) working in harmony
+- **Performance Monitoring**: Request-level timing and performance analytics
+- **Scalable Design**: Built with expansion and additional features in mind
+
+#### Frontend Architecture
+- **Component-Based Design**: Modular React components for maintainability
+- **State Management**: Efficient state handling with React hooks
+- **CSS Modules**: Scoped styling preventing conflicts and ensuring maintainability
+- **Modern Web Standards**: ES6+, responsive design, and progressive enhancement
+
+---
+
 
 ---
 
@@ -128,7 +207,7 @@ For convenience, I've created a one-click setup option, this can be used later w
 ### Additional Features
 
 - **Audio Player**: Background audio with localStorage-persistent settings  
-- **Dark Theme**: Modern, eye-friendly dark mode  
+- **Theme Selector**: Interactive theme switching with multiple color schemes and visual options
 - **Gradient Accents**: Stylish buttons and UI elements
 
 ---
@@ -199,101 +278,5 @@ When testing the application, I recommend:
 
 ---
 
-Thank you for reviewing my submission!  
+Thank you for reviewing my portfolio!  
 I look forward to discussing my implementation choices and technical decisions.
-
----
-
-# Updates (LangChain Branch)
-
-In this update, I've significantly enhanced the AI capabilities of the application by integrating **LangChain** and implementing **memory features** for more intelligent, context-aware responses.
-
----
-
-### 🆕 What's New?
-
-#### Architecture Improvements
-
-- **LangChain Integration**  
-  Refactored the backend from direct OpenAI API calls to LangChain's more modular and flexible framework.
-
-- **Vector-Based Memory (RAG)**  
-  Implemented **Retrieval Augmented Generation** using `sentence-transformers` and **FAISS** for efficient long-term memory and conversation history.
-
-- **Token Optimization**  
-  Introduced intelligent token counting and management to avoid hitting API token limits.
-
-- **Enhanced Context Awareness**  
-  The AI now maintains session memory and references past interactions, while still accessing sales rep data when relevant.
-
----
-
-### 📈 Development Journey
-
-- Started with **direct OpenAI API integration** for basic Q&A functionality  
-- Experimented with **LangChain's RunnableWithMessageHistory** for session memory  
-- Encountered **token limit issues** using plain conversation history  
-- Shifted to **vector-based retrieval (RAG)** using `sentence-transformers` for memory optimization  
-- Fine-tuned history retrieval to ensure **only the most relevant messages are used**
-
----
-
-### ⚙️ Technical Implementation
-
-- Used `sentence-transformers` to generate **embeddings** for user-AI interactions  
-- Implemented a **FAISS vector store** for fast similarity search  
-- Maintained full compatibility with existing **dummy sales rep data integration**  
-- Optimized token usage with intelligent trimming and batching
-
----
-
-### 🚀 How to Use This Branch
-
-1. **Switch to the `LangChain` branch**:
-
-    ```bash
-    git checkout langchain
-    ```
-
-2. **Reinstall backend requirements** (new dependencies added):
-
-    ```bash
-    cd backend
-    pip install -r requirements.txt
-    ```
-
-3. **Start both servers** as usual
-
-    ```bash
-    # Backend
-    uvicorn main:app --reload
-
-    # Frontend (in separate terminal)
-    cd frontend
-    npm run dev
-    ```
-
-> ⚠️ **Note:** This feature only works with the latest commit on the `langchain` branch. Make sure you're using the most recent version.
-
----
-
-### 🧠 Testing the Memory Feature
-
-You can now test the AI's ability to **remember past conversations**:
-
-- Start by saying:
-
-    ```
-    My name is [your name]
-    ```
-
-- Then later ask:
-
-    ```
-    What's my name?
-    ```
-
-The AI should recall your name correctly based on previous context.  
-You can also continue using **sales rep data** keywords and the AI will maintain context intelligently across turns.
-
----
