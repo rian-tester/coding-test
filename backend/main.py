@@ -2,52 +2,24 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from middleware.timing import TimingMiddleware
-import uvicorn
-import json
-import os
-from dotenv import load_dotenv
-import logging
-from pydantic import BaseModel
-from langchain_openai import ChatOpenAI
-from langchain.prompts import PromptTemplate
-import tiktoken
-from sentence_transformers import SentenceTransformer
-import faiss
-import numpy as np
-from functools import lru_cache
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
-import time
+from services.ai_router import AIRouter
+from services.rag_service import RAGService
+from services.chat_service import ChatService
+from services.data_service import DataService
+from models.schemas import QuestionRequest, AIResponse, RouteType
 from utils.logger import logger
+import uvicorn
+import os
+import time
+import asyncio
+from dotenv import load_dotenv
 
-# Initialize logging on server startup
-def initialize_server_logging():
-    """Initialize comprehensive server logging"""
-    logger.log_sync("SERVER", "STARTUP_BEGIN", extra="Initializing InterOpera API Server")
-    
-    # Log environment information
-    python_version = f"{os.sys.version_info.major}.{os.sys.version_info.minor}.{os.sys.version_info.micro}"
-    logger.log_sync("SERVER", "ENVIRONMENT", extra=f"Python {python_version}")
-    
-    # Log current working directory
-    current_dir = os.getcwd()
-    logger.log_sync("SERVER", "WORKING_DIR", extra=current_dir)
-    
-    # Check if log file was created successfully
-    if os.path.exists("api-log.txt"):
-        logger.log_sync("SERVER", "LOG_FILE_READY", extra="api-log.txt created successfully")
-    else:
-        logger.log_sync("SERVER", "LOG_FILE_ERROR", extra="Failed to create api-log.txt")
+load_dotenv()
 
-# Call initialization
-initialize_server_logging()
-
-# Initialize FastAPI app
 app = FastAPI(
     title="InterOpera API",
-    description="This is the backend API for the InterOpera project. It provides endpoints for managing sales representatives and AI-powered question answering.",
-    version="1.0.0",
-    terms_of_service="http://example.com/terms/",
+    description="AI-powered sales assistant with modular architecture and intelligent routing",
+    version="2.0.0",
     contact={
         "name": "InterOpera Support",
         "url": "http://example.com/contact/",
@@ -59,373 +31,122 @@ app = FastAPI(
     },
 )
 
-# Add middleware
 app.add_middleware(TimingMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Frontend URL
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Serve static files from the "images" directory
-app.mount("/images", StaticFiles(directory="images"), name="images")
+if os.path.exists("images"):
+    app.mount("/images", StaticFiles(directory="images"), name="images")
 
-# Load dummy data
-with open("dummyData.json", "r") as f:
-    DUMMY_DATA = json.load(f)
-
-# Load environment variables
-load_dotenv()
-
-# Load OpenAI API key
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    logger.log_sync("SERVER", "CONFIG_ERROR", extra="OPENAI_API_KEY not found in environment")
-    raise RuntimeError("OPENAI_API_KEY is not set in the environment variables.")
-else:
-    logger.log_sync("SERVER", "CONFIG_SUCCESS", extra="OPENAI_API_KEY loaded successfully")
-
-# Initialize LangChain Chat Model
-chat_model = ChatOpenAI(
-    model="gpt-4",
-    openai_api_key=OPENAI_API_KEY,
-    temperature=0.7,
-    max_completion_tokens=1000  # Reduced to leave room for input tokens
-)
-
-# Load system instruction from assistant.txt
-def load_system_instruction():
-    with open("assistant.txt", "r") as f:
-        return f.read().strip()
-
-# Create a LangChain PromptTemplate
-system_instruction = load_system_instruction()
-prompt_template = PromptTemplate(
-    input_variables=["history_messages", "question", "data"],
-    template=(
-        "{system_instruction}\n\n"
-        "Conversation history:\n"
-        "{history_messages}\n\n"
-        "The user asked: {question}\n"
-        "Here is the relevant data: {data}\n"
-        "Please provide a clean, human-readable, and elaborated response."
-    )
-)
-
-# Chain the PromptTemplate and ChatOpenAI using the `|` operator
-llm_chain = prompt_template | chat_model
-
-# Configure logging
-logging.basicConfig(
-    level=logging.ERROR,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(),  # Logs to console
-        logging.FileHandler("error.log"),  # Logs to a file
-    ],
-)
-
-# Initialize the embedding model
-embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
-
-# Initialize FAISS index for conversation history
-dimension = 384  # Dimension of the embeddings from the model
-index = faiss.IndexFlatL2(dimension)
-
-# Store metadata (e.g., message content and type) alongside embeddings
-conversation_metadata = []
-
-# NEW: Sales Rep Optimization Variables
-sales_rep_chunks = []
-sales_rep_index = None
-sales_rep_metadata = []
-sales_rep_cache = {}
-executor = ThreadPoolExecutor(max_workers=2)
-token_cache = {}
-
-def create_sales_rep_chunks():
-    """Create searchable text chunks from sales rep data - runs once on startup"""
-    global sales_rep_chunks, sales_rep_metadata
+def initialize_server():
+    logger.log_sync("SERVER", "STARTUP_BEGIN", extra="Initializing InterOpera API Server v2.0")
     
-    chunks = []
-    metadata = []
+    python_version = f"{os.sys.version_info.major}.{os.sys.version_info.minor}.{os.sys.version_info.micro}"
+    logger.log_sync("SERVER", "ENVIRONMENT", extra=f"Python {python_version}")
     
-    for rep in DUMMY_DATA.get("salesReps", []):
-        # Profile chunk
-        profile_text = f"Sales Rep: {rep['name']}, Role: {rep['role']}, Region: {rep['region']}, Skills: {', '.join(rep['skills'])}"
-        chunks.append(profile_text)
-        metadata.append({"type": "profile", "rep_id": rep["id"], "rep_name": rep["name"]})
-        
-        # Deals chunk
-        if rep.get("deals"):
-            deals_text = f"{rep['name']} deals: "
-            for deal in rep["deals"]:
-                deals_text += f"Client {deal['client']} - ${deal['value']} - {deal['status']}; "
-            chunks.append(deals_text)
-            metadata.append({"type": "deals", "rep_id": rep["id"], "rep_name": rep["name"]})
-        
-        # Clients chunk
-        if rep.get("clients"):
-            clients_text = f"{rep['name']} clients: "
-            for client in rep["clients"]:
-                clients_text += f"{client['name']} ({client['industry']}) - {client['contact']}; "
-            chunks.append(clients_text)
-            metadata.append({"type": "clients", "rep_id": rep["id"], "rep_name": rep["name"]})
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    if not OPENAI_API_KEY:
+        logger.log_sync("SERVER", "CONFIG_ERROR", extra="OPENAI_API_KEY not found")
+        raise RuntimeError("OPENAI_API_KEY is not set in environment variables")
     
-    return chunks, metadata
+    logger.log_sync("SERVER", "CONFIG_SUCCESS", extra="OPENAI_API_KEY loaded")
+    
+    data_service = DataService()
+    sales_data = data_service.get_sales_data()
+    
+    def load_system_instruction():
+        try:
+            with open("assistant.txt", "r") as f:
+                return f.read().strip()
+        except FileNotFoundError:
+            return "You are a helpful AI assistant for InterOpera sales support."
+    
+    system_instruction = load_system_instruction()
+    
+    ai_router = AIRouter(OPENAI_API_KEY)
+    rag_service = RAGService(OPENAI_API_KEY, sales_data)
+    chat_service = ChatService(OPENAI_API_KEY, system_instruction)
+    
+    logger.log_sync("SERVER", "SERVICES_INITIALIZED", extra="All services ready")
+    logger.log_sync("SERVER", "STARTUP_COMPLETE", extra="InterOpera API Server v2.0 ready")
+    
+    return ai_router, rag_service, chat_service, data_service
 
-def initialize_sales_rep_search():
-    """Initialize FAISS index for sales rep data - runs once on startup"""
-    global sales_rep_chunks, sales_rep_index, sales_rep_metadata
-    
-    sales_rep_chunks, sales_rep_metadata = create_sales_rep_chunks()
-    
-    if sales_rep_chunks:
-        # Create embeddings
-        embeddings = embedding_model.encode(sales_rep_chunks)
-        
-        # Initialize FAISS index for sales rep data
-        sales_rep_index = faiss.IndexFlatIP(dimension)
-        
-        # Normalize embeddings for cosine similarity
-        faiss.normalize_L2(embeddings)
-        sales_rep_index.add(embeddings.astype('float32'))
+ai_router, rag_service, chat_service, data_service = initialize_server()
 
-@lru_cache(maxsize=100)
-def search_sales_rep_data_fast(question: str, top_k: int = 2) -> str:
-    """Faster version with reduced top_k and better caching"""
-    if sales_rep_index is None or not sales_rep_chunks:
-        return json.dumps(DUMMY_DATA.get("salesReps", [])[:2])  # Limit fallback data
-    
-    # Check cache first
-    cache_key = f"{question.lower().strip()}"
-    if cache_key in sales_rep_cache:
-        return sales_rep_cache[cache_key]
-    
-    # Create query embedding
-    query_embedding = embedding_model.encode([question])
-    faiss.normalize_L2(query_embedding)
-    
-    # Search for similar chunks (reduced top_k for speed)
-    scores, indices = sales_rep_index.search(query_embedding.astype('float32'), top_k)
-    
-    # Collect relevant information (simplified)
-    relevant_info = []
-    
-    for i, idx in enumerate(indices[0]):
-        if scores[0][i] > 0.25:  # Slightly higher threshold
-            chunk = sales_rep_chunks[idx]
-            metadata = sales_rep_metadata[idx]
-            relevant_info.append(f"{chunk}")  # Simplified format
-            
-            if len(relevant_info) >= 2:  # Limit results for speed
-                break
-    
-    result = "\n".join(relevant_info) if relevant_info else "Limited sales rep data available."
-    
-    # Cache the result
-    sales_rep_cache[cache_key] = result
-    return result
-
-# Initialize sales rep search on startup
-logger.log_sync("SERVER", "INIT_RAG", extra="Initializing sales rep search system")
-initialize_sales_rep_search()
-logger.log_sync("SERVER", "INIT_RAG_COMPLETE", extra=f"Indexed {len(sales_rep_chunks)} sales rep chunks")
-
-# Function to check if the question is related to dummy data
-def is_related_to_dummy_data(question):
-    keywords = [
-        "sales reps", "sales representatives", "dummy data", "sales team",
-        "salesperson", "sales rep", "sales executive", "sales manager",
-        "alice", "bob", "charlie", "dana", "deals", "clients", "performance"
-    ]
-    return any(keyword in question.lower() for keyword in keywords)
-
-# Function to generate a response from dummy data
-def generate_dummy_data_response():
-    sales_reps = DUMMY_DATA.get("salesReps", [])
-    if not sales_reps:
-        return "I couldn't find any sales representatives in the dummy data."
-    response = "Here are the sales representatives from the dummy data:\n"
-    response += "\n".join([f"- {rep}" for rep in sales_reps])
-    return response
-
-# Define the sales-rep doc
 api_sales_reps_doc = """
-    Retrieve a list of sales representatives and their details.
+Retrieve sales representatives data.
 
-    **Response:**
-    - `200 OK`: A JSON object containing the sales representatives' data.
+**Response:**
+- `200 OK`: JSON object with sales representatives data
 
-    **Example Response:**
-    ```json
-    {
-        "salesReps": [
-            {
-                "name": "John Doe",
-                "role": "Regional Manager",
-                "region": "North America",
-                "clients": [
-                    {"name": "Client A", "status": "Active"},
-                    {"name": "Client B", "status": "Inactive"}
-                ]
-            }
-        ]
-    }
-    ```
-    """
-
-@app.get("/api/sales-reps", summary="Get Sales Representatives", tags=["Sales Reps"], description=api_sales_reps_doc)
-def get_sales_reps():
-    return DUMMY_DATA
-
-# Define the API doc
-api_ai_doc = """
-    Handles AI-powered question-answering requests.
-
-    **Request Body:**
-    - `question` (str): The question to be answered.
-
-    **Responses:**
-    - `200 OK`: A JSON object containing the AI-generated answer.
-    - `400 Bad Request`: If the `question` field is empty.
-    - `422 Unprocessable Entity`: If the request body is malformed or the `question` field is of an invalid type.
-    - `500 Internal Server Error`: If an error occurs while processing the request.
-
-    **Example Request:**
-    ```json
-    {
-        "question": "Who are the sales reps?"
-    }
-    ```
-
-    **Example Response:**
-    ```json
-    {
-        "answer": "The sales representatives are John Doe and Jane Smith."
-    }
-    ```
-
-    **Error Response (400):**
-    ```json
-    {
-        "detail": "The 'question' field cannot be empty."
-    }
-    ```
-
-    **Error Response (500):**
-    ```json
-    {
-        "detail": "Failed to process the AI request. Please try again later."
-    }
-    ```
-    """
-
-# Define a Pydantic model for the request body
-class AIRequest(BaseModel):
-    question: str
-
-def store_message(message, message_type):
-    """
-    Store a message in the vector store with its metadata.
-    """
-    global conversation_metadata
-
-    # Generate embedding for the message
-    embedding = embedding_model.encode([message])
-
-    # Add the embedding to the FAISS index
-    index.add(np.array(embedding, dtype=np.float32))
-
-    # Store metadata
-    conversation_metadata.append({"content": message, "type": message_type})
-
-def retrieve_relevant_messages(query, top_k=5):
-    """
-    Retrieve the most relevant messages from the vector store.
-    """
-    # Safety checks first
-    if len(conversation_metadata) == 0:
-        return []
-    
-    if index.ntotal == 0:
-        return []
-    
-    # Limit top_k to available data
-    actual_top_k = min(top_k, len(conversation_metadata), index.ntotal)
-    
-    try:
-        # Generate embedding for the query
-        query_embedding = embedding_model.encode([query])
-
-        # Perform similarity search
-        distances, indices = index.search(np.array(query_embedding, dtype=np.float32), actual_top_k)
-        
-        # FIXED: More robust index checking
-        relevant_messages = []
-        if len(indices) > 0 and len(indices[0]) > 0:
-            for i in indices[0]:
-                # Double-check bounds
-                if isinstance(i, (int, np.integer)) and 0 <= i < len(conversation_metadata):
-                    relevant_messages.append(conversation_metadata[i])
-                else:
-                    logging.warning(f"Invalid index {i}, metadata length: {len(conversation_metadata)}")
-        
-        return relevant_messages
-        
-    except Exception as e:
-        logging.error(f"Error in retrieve_relevant_messages: {e}")
-        # Return empty list instead of crashing
-        return []
-
-def needs_conversation_context(question: str) -> bool:
-    """Determine if question needs conversation history"""
-    context_indicators = [
-        "previous", "earlier", "before", "that", "this", "it", "them", "they",
-        "what did", "as mentioned", "continue", "elaborate", "more about",
-        "follow up", "regarding our", "about what we", "you said", "tell me more"
+**Example Response:**
+```json
+{
+    "salesReps": [
+        {
+            "id": "1",
+            "name": "Alice Smith",
+            "role": "Senior Sales Manager",
+            "region": "North America"
+        }
     ]
-    return any(indicator in question.lower() for indicator in context_indicators)
+}
+```
+"""
 
-def is_simple_factual_question(question: str) -> bool:
-    """Detect simple factual questions that don't need history"""
-    factual_patterns = [
-        "what is", "who is", "how to", "explain", "define", "tell me about",
-        "what are", "how does", "why does", "when was", "where is", "how do"
-    ]
-    question_lower = question.lower()
-    return (any(pattern in question_lower for pattern in factual_patterns) 
-            and len(question.split()) < 15 
-            and not needs_conversation_context(question))
-
-async def store_conversation_async(question: str, response: str):
-    """Store conversation in background after response is sent"""
-    try:
-        start_time = time.time()
-        # Run in thread pool to avoid blocking
-        loop = asyncio.get_event_loop()
-        await loop.run_in_executor(executor, store_message, question, "human")
-        await loop.run_in_executor(executor, store_message, response, "ai")
-        
-        duration = time.time() - start_time
-        # Log storage completion (using a generic session for background tasks)
-        logger.log_sync("BACKGROUND", "STORAGE_COMPLETE", duration, f"Stored conversation pair in {duration:.3f}s")
-    except Exception as e:
-        logger.log_sync("BACKGROUND", "STORAGE_ERROR", extra=f"Background storage failed: {str(e)}")
-        logging.error(f"Background storage error: {e}")
-
-# Remove the RunnableWithMessageHistory wrapper and use llm_chain directly
-@app.post("/api/ai", summary="AI Question Answering", tags=["AI"], description=api_ai_doc)
-async def ai_endpoint(request: Request, ai_request: AIRequest):
-    """
-    Enhanced tri-path optimized AI endpoint with comprehensive logging
-    """
+@app.get("/api/sales-reps", summary="Get Sales Representatives", tags=["Sales Data"], description=api_sales_reps_doc)
+async def get_sales_reps(request: Request):
     timing_context = request.state.timing_context
-    question = ai_request.question.strip()
+    timing_context.log_event("DATA_RETRIEVAL", "Fetching sales reps data")
     
-    # Log input received
+    return data_service.get_sales_data()
+
+api_ai_doc = """
+AI-powered question answering with intelligent routing.
+
+**Features:**
+- Automatic question classification (sales vs general)
+- RAG-powered sales data queries
+- General knowledge responses
+- Performance logging and monitoring
+
+**Request Body:**
+- `question` (str): User question
+
+**Responses:**
+- `200 OK`: AI-generated answer with metadata
+- `400 Bad Request`: Empty question
+- `500 Internal Server Error`: Processing error
+
+**Example Request:**
+```json
+{
+    "question": "Who are the top sales representatives?"
+}
+```
+
+**Example Response:**
+```json
+{
+    "answer": "Based on the sales data, our top representatives are...",
+    "route_type": "sales",
+    "processing_time": 1.234
+}
+```
+"""
+
+@app.post("/api/ai", summary="AI Question Answering", tags=["AI"], description=api_ai_doc)
+async def ai_endpoint(request: Request, question_request: QuestionRequest):
+    timing_context = request.state.timing_context
+    question = question_request.question.strip()
+    session_id = request.state.session_id
+    
     timing_context.log_input_received(question, len(question))
     
     if not question:
@@ -433,194 +154,36 @@ async def ai_endpoint(request: Request, ai_request: AIRequest):
         raise HTTPException(status_code=400, detail="The 'question' field cannot be empty.")
 
     try:
-        # Smart routing with logging
-        timing_context.log_event("ROUTING_START", "Analyzing question type")
-        is_sales_question = is_related_to_dummy_data(question)
-        needs_context = needs_conversation_context(question)
-        is_simple_factual = is_simple_factual_question(question)
+        total_start_time = time.time()
         
-        if is_sales_question:
-            timing_context.log_event("ROUTING_DECISION", "SALES_RAG_PATH")
-            
-            # RAG operations with detailed timing
-            rag_start_time = time.time()
-            timing_context.log_event("RAG_START", "Searching sales data")
-            sales_data = search_sales_rep_data_fast(question, top_k=2)
-            timing_context.log_duration_event("RAG_END", rag_start_time, f"Retrieved {len(sales_data)} chars of data")
-            
-            # Prepare fast chat model
-            timing_context.log_event("MODEL_PREP", "Setting up GPT-3.5-turbo for sales query")
-            fast_chat_model = ChatOpenAI(
-                model="gpt-3.5-turbo",
-                openai_api_key=OPENAI_API_KEY,
-                temperature=0.3,
-                max_completion_tokens=500
-            )
-            
-            sales_prompt = PromptTemplate(
-                input_variables=["question", "data"],
-                template=(
-                    "You are a sales data assistant. Answer the question using the provided sales data.\n\n"
-                    "Sales Data:\n{data}\n\n"
-                    "Question: {question}\n\n"
-                    "Provide a concise, accurate answer:"
-                )
-            )
-            
-            fast_chain = sales_prompt | fast_chat_model
-            
-            # Token optimization with logging
-            estimated_tokens = len(sales_data + question) // 4
-            if estimated_tokens > 3000:
-                timing_context.log_event("TOKEN_OPTIMIZATION", f"Truncating data from {len(sales_data)} to 1000 chars")
-                sales_data = sales_data[:1000]
-            
-            # OpenAI API call with detailed timing
-            openai_start_time = time.time()
-            timing_context.log_event("OPENAI_START", "Calling GPT-3.5-turbo for sales data")
-            response = fast_chain.invoke({
-                "question": question,
-                "data": sales_data
-            })
-            timing_context.log_duration_event("OPENAI_END", openai_start_time, "Sales query completed")
-            
-            response_text = response.content if hasattr(response, "content") else str(response)
-            timing_context.log_response_ready(len(response_text))
-            
-            response_data = {"answer": response_text}
-            
-            # Store in background after response with logging
-            timing_context.log_event("BACKGROUND_STORAGE", "Queuing conversation storage")
-            asyncio.create_task(store_conversation_async(question, response_text))
-            
-            return response_data
-            
-        elif is_simple_factual and not needs_context:
-            timing_context.log_event("ROUTING_DECISION", "SIMPLE_GENERAL_PATH")
-            
-            timing_context.log_event("MODEL_PREP", "Setting up GPT-3.5-turbo for general query")
-            simple_chat_model = ChatOpenAI(
-                model="gpt-3.5-turbo",
-                openai_api_key=OPENAI_API_KEY,
-                temperature=0.7,
-                max_completion_tokens=800
-            )
-            
-            simple_prompt = PromptTemplate(
-                input_variables=["question"],
-                template=(
-                    "You are a helpful AI assistant. Provide a clear, informative answer.\n\n"
-                    "Question: {question}\n\n"
-                    "Answer:"
-                )
-            )
-            
-            simple_chain = simple_prompt | simple_chat_model
-            
-            # OpenAI API call for simple questions
-            openai_start_time = time.time()
-            timing_context.log_event("OPENAI_START", "Calling GPT-3.5-turbo for general query")
-            response = simple_chain.invoke({"question": question})
-            timing_context.log_duration_event("OPENAI_END", openai_start_time, "General query completed")
-            
-            response_text = response.content if hasattr(response, "content") else str(response)
-            timing_context.log_response_ready(len(response_text))
-            
-            # For simple factual questions, skip storage to save time
-            timing_context.log_event("STORAGE_SKIP", "Skipping storage for simple factual question")
-            return {"answer": response_text}
-            
+        route_decision = await ai_router.route_question(question, session_id)
+        
+        if route_decision.route_type == RouteType.SALES:
+            timing_context.log_event("ROUTE_DECISION", "SALES_RAG_PATH")
+            answer = await rag_service.process_sales_question(question, session_id)
         else:
-            timing_context.log_event("ROUTING_DECISION", "CONTEXTUAL_PATH")
-            
-            # Context retrieval with detailed timing
-            try:
-                context_start_time = time.time()
-                timing_context.log_event("CONTEXT_RETRIEVAL_START", "Retrieving conversation history")
-                relevant_messages = retrieve_relevant_messages(question, top_k=3)
-                timing_context.log_duration_event("CONTEXT_RETRIEVAL_END", context_start_time, 
-                                                f"Retrieved {len(relevant_messages)} relevant messages")
-            except Exception as e:
-                timing_context.log_event("CONTEXT_ERROR", f"Failed to retrieve context: {str(e)}")
-                logging.error(f"Failed to retrieve conversation history: {e}")
-                relevant_messages = []
-            
-            history_messages = "\n".join(
-                f"{'User' if msg['type'] == 'human' else 'AI'}: {msg['content']}" for msg in relevant_messages
-            )
-            
-            timing_context.log_event("MODEL_PREP", "Setting up GPT-3.5-turbo for contextual query")
-            contextual_chat_model = ChatOpenAI(
-                model="gpt-3.5-turbo",  # Faster than GPT-4
-                openai_api_key=OPENAI_API_KEY,
-                temperature=0.7,
-                max_completion_tokens=1000
-            )
-            
-            contextual_prompt = PromptTemplate(
-                input_variables=["history_messages", "question", "data", "system_instruction"],
-                template=(
-                    "{system_instruction}\n\n"
-                    "Conversation history:\n"
-                    "{history_messages}\n\n"
-                    "The user asked: {question}\n"
-                    "Here is the relevant data: {data}\n"
-                    "Please provide a clean, human-readable, and elaborated response."
-                )
-            )
-            
-            contextual_chain = contextual_prompt | contextual_chat_model
-            
-            input_data = {
-                "history_messages": history_messages,
-                "question": question,
-                "data": "No specific data available.",
-                "system_instruction": system_instruction,
-            }
-            
-            # OpenAI API call for contextual questions
-            openai_start_time = time.time()
-            timing_context.log_event("OPENAI_START", "Calling GPT-3.5-turbo for contextual query")
-            response = contextual_chain.invoke(input_data)
-            timing_context.log_duration_event("OPENAI_END", openai_start_time, "Contextual query completed")
-            
-            response_text = response.content if hasattr(response, "content") else str(response)
-            timing_context.log_response_ready(len(response_text))
-            
-            # Send response immediately
-            response_data = {"answer": response_text}
-            
-            # Store conversation in background (non-blocking) with logging
-            timing_context.log_event("BACKGROUND_STORAGE", "Queuing contextual conversation storage")
-            asyncio.create_task(store_conversation_async(question, response_text))
-            
-            return response_data
+            timing_context.log_event("ROUTE_DECISION", "GENERAL_CHAT_PATH")
+            answer = await chat_service.process_general_question(question, session_id)
         
-    except HTTPException:
-        # Re-raise HTTP exceptions without logging as errors
-        raise
+        total_duration = time.time() - total_start_time
+        timing_context.log_response_ready(len(answer))
+        
+        response = AIResponse(
+            answer=answer,
+            route_type=route_decision.route_type.value,
+            processing_time=round(total_duration, 3)
+        )
+        
+        return response
+        
     except Exception as e:
-        timing_context.log_event("ERROR", f"Unexpected error: {str(e)}")
-        logging.error(f"AI API error: {e}", exc_info=True)
+        logger.log_sync(session_id, "AI_ENDPOINT_ERROR", extra=f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to process the AI request. Please try again later.")
-
-@app.on_event("startup")
-async def startup_event():
-    """Server startup event handler"""
-    logger.log_sync("SERVER", "STARTUP_COMPLETE", extra="InterOpera API Server is ready to accept requests")
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """Server shutdown event handler"""
     logger.log_sync("SERVER", "SHUTDOWN_BEGIN", extra="InterOpera API Server shutting down")
-    try:
-        await logger.shutdown()
-        print("🔍 Server shutdown complete - all logs flushed")
-    except Exception as e:
-        print(f"Error during shutdown: {e}")
 
 if __name__ == "__main__":
     logger.log_sync("SERVER", "STARTUP_UVICORN", extra="Starting Uvicorn server on 0.0.0.0:8000")
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
-
-
