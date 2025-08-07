@@ -2,7 +2,8 @@ import json
 import time
 import faiss
 import numpy as np
-from typing import List, Dict, Any
+import re
+from typing import List, Dict, Any, Set
 from sentence_transformers import SentenceTransformer
 from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
@@ -30,6 +31,8 @@ class RAGService:
                 "Previous conversation:\n{conversation_history}\n\n"
                 "Sales Data:\n{sales_data}\n\n"
                 "Current question: {question}\n\n"
+                "If multiple people are mentioned in the question, provide information about ALL of them. "
+                "Organize your response clearly for each person mentioned. "
                 "Provide a concise, accurate answer based on the sales data and conversation context:"
             )
         )
@@ -40,8 +43,37 @@ class RAGService:
         self.sales_index = None
         self.sales_metadata = []
         self.cache = {}
+        self.sales_keywords = set()
         
         self._initialize_vector_store()
+        self._extract_sales_keywords()
+
+    def _extract_sales_keywords(self):
+        for rep in self.sales_data.get("salesReps", []):
+            name_parts = rep["name"].lower().split()
+            self.sales_keywords.update(name_parts)
+            
+            self.sales_keywords.add(rep["role"].lower())
+            self.sales_keywords.add(rep["region"].lower())
+            
+            for skill in rep.get("skills", []):
+                self.sales_keywords.add(skill.lower())
+            
+            for client in rep.get("clients", []):
+                self.sales_keywords.add(client["name"].lower())
+            
+            for deal in rep.get("deals", []):
+                self.sales_keywords.add(deal["client"].lower())
+
+    def _extract_mentioned_names(self, question: str) -> Set[str]:
+        question_lower = question.lower()
+        mentioned_keywords = set()
+        
+        for keyword in self.sales_keywords:
+            if re.search(r'\b' + re.escape(keyword) + r'\b', question_lower):
+                mentioned_keywords.add(keyword)
+        
+        return mentioned_keywords
 
     def _initialize_vector_store(self):
         self.sales_chunks, self.sales_metadata = self._create_sales_chunks()
@@ -79,7 +111,7 @@ class RAGService:
         return chunks, metadata
 
     @lru_cache(maxsize=100)
-    def _search_sales_data(self, question: str, top_k: int = 2) -> str:
+    def _search_sales_data(self, question: str, top_k: int = 5) -> str:
         if self.sales_index is None or not self.sales_chunks:
             return json.dumps(self.sales_data.get("salesReps", [])[:2])
         
@@ -87,37 +119,52 @@ class RAGService:
         if cache_key in self.cache:
             return self.cache[cache_key]
         
-        query_embedding = self.embedding_model.encode([question])
-        faiss.normalize_L2(query_embedding)
+        mentioned_keywords = self._extract_mentioned_names(question)
+        relevant_info = set()
         
-        scores, indices = self.sales_index.search(query_embedding.astype('float32'), top_k)
+        if mentioned_keywords:
+            for keyword in mentioned_keywords:
+                keyword_results = self._search_by_keyword(keyword, top_k=3)
+                relevant_info.update(keyword_results)
         
-        relevant_info = []
-        for i, idx in enumerate(indices[0]):
-            if scores[0][i] > 0.25:
-                chunk = self.sales_chunks[idx]
-                relevant_info.append(chunk)
-                
-                if len(relevant_info) >= 2:
-                    break
+        if not relevant_info:
+            query_embedding = self.embedding_model.encode([question])
+            faiss.normalize_L2(query_embedding)
+            scores, indices = self.sales_index.search(query_embedding.astype('float32'), top_k)
+            
+            for i, idx in enumerate(indices[0]):
+                if scores[0][i] > 0.25:
+                    chunk = self.sales_chunks[idx]
+                    relevant_info.add(chunk)
         
-        result = "\n".join(relevant_info) if relevant_info else "Limited sales rep data available."
+        result = "\n".join(list(relevant_info)[:6]) if relevant_info else "Limited sales rep data available."
         self.cache[cache_key] = result
         return result
+    
+    def _search_by_keyword(self, keyword: str, top_k: int = 3) -> List[str]:
+        matching_chunks = []
+        
+        for i, chunk in enumerate(self.sales_chunks):
+            if re.search(r'\b' + re.escape(keyword) + r'\b', chunk.lower()):
+                matching_chunks.append(chunk)
+                if len(matching_chunks) >= top_k:
+                    break
+        
+        return matching_chunks
 
     async def process_sales_question(self, question: str, session_id: str) -> str:
         start_time = time.time()
         
         logger.log_sync(session_id, "RAG_SEARCH_START", extra="Searching sales data")
         
-        sales_data = self._search_sales_data(question, top_k=2)
+        sales_data = self._search_sales_data(question, top_k=5)
         
         search_duration = time.time() - start_time
         logger.log_sync(session_id, "RAG_SEARCH_END", search_duration, f"Retrieved {len(sales_data)} chars")
         
         if len(sales_data) > 3000:
-            sales_data = sales_data[:1000]
-            logger.log_sync(session_id, "RAG_DATA_TRUNCATED", extra="Data truncated to 1000 chars")
+            sales_data = sales_data[:2500]
+            logger.log_sync(session_id, "RAG_DATA_TRUNCATED", extra="Data truncated to 2500 chars")
         
         openai_start = time.time()
         logger.log_sync(session_id, "RAG_OPENAI_START", extra="Generating response")
