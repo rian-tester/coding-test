@@ -2,6 +2,7 @@ import time
 from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from utils.logger import logger
+from services.conversation_memory import conversation_memory
 
 class ChatService:
     def __init__(self, openai_api_key: str, system_instruction: str):
@@ -15,11 +16,12 @@ class ChatService:
         )
         
         self.chat_prompt = PromptTemplate(
-            input_variables=["system_instruction", "question"],
+            input_variables=["system_instruction", "conversation_history", "question"],
             template=(
                 "{system_instruction}\n\n"
-                "User question: {question}\n\n"
-                "Provide a helpful, clear response:"
+                "Previous conversation:\n{conversation_history}\n\n"
+                "Current user question: {question}\n\n"
+                "Provide a helpful, clear response that takes into account the conversation history:"
             )
         )
         
@@ -31,8 +33,11 @@ class ChatService:
         logger.log_sync(session_id, "CHAT_OPENAI_START", extra="Processing general question")
         
         try:
+            conversation_history = await conversation_memory.get_conversation_context(session_id)
+            
             response = self.chat_chain.invoke({
                 "system_instruction": self.system_instruction,
+                "conversation_history": conversation_history or "No previous conversation",
                 "question": question
             })
             

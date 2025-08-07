@@ -1,20 +1,23 @@
+# Frontend
 frontend/.next/
 frontend/node_modules/
 frontend/package-lock.json
+frontend/conv-log.txt
+
+# Backend
 backend/__pycache__/
 backend/.env
 backend/error.log
-frontend/conv-log.txt
-backend/tests/__pycache__/
-References/
 backend/api-log.txt
-backend\main_v2.py
-backend\main_original.py
-backend/models/__pycache__/__init__.cpython-313.pyc
-backend/models/__pycache__/schemas.cpython-313.pyc
-backend/services/__pycache__/__init__.cpython-313.pyc
-backend/services/__pycache__/
 backend/main_v2.py
 backend/main_original.py
-backend/utils/__pycache__/
 backend/test_system.py
+backend/models/__pycache__/
+backend/services/__pycache__/
+backend/utils/__pycache__/
+backend/middleware/__pycache__/
+backend/tests/__pycache__/
+backend/test/__pycache__/
+
+# Project References
+References/

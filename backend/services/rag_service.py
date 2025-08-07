@@ -9,6 +9,7 @@ from langchain.prompts import PromptTemplate
 from functools import lru_cache
 from models.schemas import SalesRepData
 from utils.logger import logger
+from services.conversation_memory import conversation_memory
 
 class RAGService:
     def __init__(self, openai_api_key: str, sales_data: Dict[str, Any]):
@@ -23,12 +24,13 @@ class RAGService:
         )
         
         self.rag_prompt = PromptTemplate(
-            input_variables=["question", "sales_data"],
+            input_variables=["question", "sales_data", "conversation_history"],
             template=(
                 "You are a sales data assistant. Answer the question using the provided sales data.\n\n"
+                "Previous conversation:\n{conversation_history}\n\n"
                 "Sales Data:\n{sales_data}\n\n"
-                "Question: {question}\n\n"
-                "Provide a concise, accurate answer based on the sales data:"
+                "Current question: {question}\n\n"
+                "Provide a concise, accurate answer based on the sales data and conversation context:"
             )
         )
         
@@ -120,9 +122,12 @@ class RAGService:
         openai_start = time.time()
         logger.log_sync(session_id, "RAG_OPENAI_START", extra="Generating response")
         
+        conversation_history = await conversation_memory.get_conversation_context(session_id)
+        
         response = self.rag_chain.invoke({
             "question": question,
-            "sales_data": sales_data
+            "sales_data": sales_data,
+            "conversation_history": conversation_history or "No previous conversation"
         })
         
         openai_duration = time.time() - openai_start

@@ -54,6 +54,28 @@ export default function Home() {
     setIsDocked(!isDocked);
   };
 
+  // Conversation memory management
+  const clearConversationHistory = async () => {
+    try {
+      const headers = {
+        "Content-Type": "application/json",
+        "X-Session-ID": "unique-session-id",
+      };
+
+      const response = await fetch("http://localhost:8000/api/conversation/clear", {
+        method: "POST",
+        headers,
+      });
+      
+      if (response.ok) {
+        setAnswerHistory([]);
+        console.log("Conversation history cleared successfully");
+      }
+    } catch (error) {
+      console.error("Failed to clear conversation history:", error);
+    }
+  };
+
   // AI Section functionality
   const handleAskQuestion = async () => {
     if (question.trim() === "") return;
@@ -107,6 +129,8 @@ export default function Home() {
   const handleClearChat = async () => {
     setAnswerHistory([]);
     setQuestion("");
+    
+    await clearConversationHistory();
     
     conversationLogger.sessionStarted = false;
     conversationLogger.sessionId = conversationLogger.generateSessionId();

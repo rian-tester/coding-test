@@ -6,6 +6,7 @@ from services.ai_router import AIRouter
 from services.rag_service import RAGService
 from services.chat_service import ChatService
 from services.data_service import DataService
+from services.conversation_memory import conversation_memory
 from models.schemas import QuestionRequest, AIResponse, RouteType
 from utils.logger import logger
 import uvicorn
@@ -68,7 +69,7 @@ def initialize_server():
     
     system_instruction = load_system_instruction()
     
-    ai_router = AIRouter(OPENAI_API_KEY)
+    ai_router = AIRouter(OPENAI_API_KEY, sales_data)
     rag_service = RAGService(OPENAI_API_KEY, sales_data)
     chat_service = ChatService(OPENAI_API_KEY, system_instruction)
     
@@ -141,6 +142,52 @@ AI-powered question answering with intelligent routing.
 ```
 """
 
+api_conversation_doc = """
+Manage conversation sessions for memory functionality.
+
+**Endpoints:**
+- `POST /api/conversation/clear` - Clear conversation history for current session
+- `GET /api/conversation/status` - Get conversation status and memory information
+
+**Features:**
+- Automatic session management with 30-minute timeout
+- In-memory conversation storage for fast response times
+- Maintains last 5 exchanges per session for context
+
+**Response Format:**
+```json
+{
+    "message": "Session cleared successfully",
+    "session_id": "uuid-string",
+    "has_history": false
+}
+```
+"""
+
+@app.post("/api/conversation/clear", summary="Clear Conversation History", tags=["Conversation"], description=api_conversation_doc)
+async def clear_conversation(request: Request):
+    session_id = request.state.session_id
+    await conversation_memory.clear_session(session_id)
+    
+    return {
+        "message": "Conversation history cleared successfully",
+        "session_id": session_id,
+        "has_history": False
+    }
+
+@app.get("/api/conversation/status", summary="Get Conversation Status", tags=["Conversation"], description=api_conversation_doc)
+async def conversation_status(request: Request):
+    session_id = request.state.session_id
+    has_history = await conversation_memory.has_session(session_id)
+    
+    return {
+        "session_id": session_id,
+        "has_history": has_history,
+        "memory_enabled": True,
+        "max_exchanges": 5,
+        "timeout_minutes": 30
+    }
+
 @app.post("/api/ai", summary="AI Question Answering", tags=["AI"], description=api_ai_doc)
 async def ai_endpoint(request: Request, question_request: QuestionRequest):
     timing_context = request.state.timing_context
@@ -167,6 +214,8 @@ async def ai_endpoint(request: Request, question_request: QuestionRequest):
         
         total_duration = time.time() - total_start_time
         timing_context.log_response_ready(len(answer))
+        
+        await conversation_memory.add_exchange(session_id, question, answer)
         
         response = AIResponse(
             answer=answer,
