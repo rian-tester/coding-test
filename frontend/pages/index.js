@@ -169,15 +169,15 @@ export default function Home() {
             {/* Dummy Data Section */}
             {activeSection === "dummy-data" && (
               <div className="dummy-section-wrapper">
-                <h2 className="section-header blue">Dummy Data</h2>
+                <h2 className="section-header">Sales Team Dashboard</h2>
                 {loading ? (
                   <Spinner />
                 ) : (
-                  <ul>
+                  <div className="cards-grid">
                     {users.map((rep) => (
                       <RepCard key={rep.id} rep={rep} />
                     ))}
-                  </ul>
+                  </div>
                 )}
               </div>
             )}
@@ -185,7 +185,7 @@ export default function Home() {
             {/* AI Section */}
             {activeSection === "ai-section" && (
               <div className="ai-section-wrapper">
-                <h2 className="section-header blue">Ask a Question</h2>
+                <h2 className="section-header">Ask a Question</h2>
                 <div style={{ height: "100%", minHeight: 0, display: "flex", flexDirection: "column" }}>
                   <ChatBot
                     question={question}

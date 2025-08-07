@@ -123,6 +123,20 @@ body {
   overflow-y: auto;
 }
 
+.cards-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem 0;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .cards-grid {
+    gap: 0.5rem;
+  }
+}
+
 /* AI section does NOT scroll */
 .ai-section-wrapper {
   height: 100%;
