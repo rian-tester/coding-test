@@ -75,54 +75,13 @@ export default function Home() {
     }
   };
 
-  // AI Section functionality
-  const handleAskQuestion = async () => {
-    if (question.trim() === "") return;
-    setLoadingAI(true);
-    
-    const currentQuestion = question.trim();
-    
-    try {
-      const headers = {
-        "Content-Type": "application/json",
-        "X-Session-ID": "unique-session-id",
-      };
-
-      const response = await fetch("http://localhost:8000/api/ai", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ question: currentQuestion }),
-      });
-      const data = await response.json();
-      console.log("AI Response:", data);
-
-      if (data.answer) {
-        const aiAnswer = data.answer;
-        
-        setAnswerHistory((prevHistory) => [
-          { question: currentQuestion, answer: aiAnswer },
-          ...prevHistory,
-        ]);
-        
-        await conversationLogger.logConversation(currentQuestion, aiAnswer);
-      } else {
-        console.error("No answer field in response:", data);
-        await conversationLogger.logError("No answer field in response", JSON.stringify(data));
-      }
-      setQuestion("");
-    } catch (error) {
-      console.error("Error in AI request:", error);
-      await conversationLogger.logError(error, "AI request failed");
-    } finally {
-      setLoadingAI(false);
-    }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey && question.trim() !== "") {
-      e.preventDefault();
-      handleAskQuestion();
-    }
+  // AI Section functionality - simplified to just clear functionality
+  // Dedicated callback for adding answers from ChatBot component
+  const addAnswerToHistory = (questionText, answerText) => {
+    setAnswerHistory((prevHistory) => [
+      { question: questionText, answer: answerText },
+      ...prevHistory,
+    ]);
   };
 
   const handleClearChat = async () => {
@@ -141,7 +100,7 @@ export default function Home() {
     <>
       <Head>
         <title>Fitra Portfolio</title>
-        <meta name="description" content="Powered with OpenAI and advanced RAG System" />
+        <meta name="description" content="Powered with OpenAI api and advanced RAG system"/>
       </Head>
       <Background />
 
@@ -162,7 +121,7 @@ export default function Home() {
             setSoundEnabled={setSoundEnabled}
           />
 
-          <main className={`main-content ${isDocked ? "expanded" : ""}`}>
+          <main className={`main-content ${isDocked ? "expanded" : ""} ${activeSection === "ai-section" ? "no-scroll" : ""}`}>
             {/* Dummy Data Section */}
             {activeSection === "dummy-data" && (
               <div className="dummy-section-wrapper">
@@ -182,17 +141,14 @@ export default function Home() {
             {/* AI Section */}
             {activeSection === "ai-section" && (
               <div className="ai-section-wrapper">
-                <div style={{ height: "100%", minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
-                  <ChatBot
-                    question={question}
-                    setQuestion={setQuestion}
-                    answerHistory={answerHistory}
-                    loadingAI={loadingAI}
-                    handleAskQuestion={handleAskQuestion}
-                    handleClearChat={handleClearChat}
-                    handleKeyDown={handleKeyDown}
-                  />
-                </div>
+                <ChatBot
+                  question={question}
+                  setQuestion={setQuestion}
+                  answerHistory={answerHistory}
+                  loadingAI={loadingAI}
+                  addAnswerToHistory={addAnswerToHistory}
+                  handleClearChat={handleClearChat}
+                />
               </div>
             )}
           </main>

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import conversationLogger from "../utils/logger";
 import styles from "./styles/ChatBot.module.css";
 
 function preprocessMarkdown(content) {
@@ -56,12 +57,10 @@ export default function ChatBot({
   setQuestion,
   answerHistory,
   loadingAI,
-  handleAskQuestion,
+  addAnswerToHistory,
   handleClearChat,
-  handleKeyDown,
 }) {
   const responseContainerRef = useRef(null);
-  const abortControllerRef = useRef(null);
   const [processingStatus, setProcessingStatus] = useState("");
   const [progress, setProgress] = useState(0);
   const [processingTime, setProcessingTime] = useState(0);
@@ -121,30 +120,29 @@ export default function ChatBot({
     setShowTyping(true);
     
     const currentQuestion = question.trim();
-    abortControllerRef.current = new AbortController();
     const startTime = Date.now();
     
     try {
       setProcessingStatus("Analyzing question...");
       setProgress(10);
       
-      const headers = {
-        "Content-Type": "application/json",
-        "X-Session-ID": "unique-session-id",
-      };
-
       const response = await fetch("http://localhost:8000/api/ai", {
         method: "POST",
-        headers,
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ question: currentQuestion }),
-        signal: abortControllerRef.current.signal,
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       
       const data = await response.json();
       const endTime = Date.now();
       const totalTime = (endTime - startTime) / 1000;
       
-      simulateProgress(data.route_type);
+      simulateProgress(data.route_type || "general");
       
       setTimeout(() => {
         const { status, progress: finalProgress, time, route } = parseStatusFromResponse(data);
@@ -153,11 +151,10 @@ export default function ChatBot({
         setProcessingTime(totalTime);
         setRouteInfo(route);
 
-        if (data.answer) {
-          setAnswerHistory((prevHistory) => [
-            { question: currentQuestion, answer: data.answer },
-            ...prevHistory,
-          ]);
+        if (data.answer && typeof addAnswerToHistory === 'function') {
+          addAnswerToHistory(currentQuestion, data.answer);
+          // Log the conversation (non-blocking)
+          conversationLogger.logConversation(currentQuestion, data.answer).catch(console.error);
         }
         
         setQuestion("");
@@ -173,26 +170,19 @@ export default function ChatBot({
 
     } catch (error) {
       setShowTyping(false);
-      if (error.name === 'AbortError') {
-        setProcessingStatus("Stopped by user");
-        setAnswerHistory((prevHistory) => [
-          { 
-            question: currentQuestion, 
-            answer: "I apologize, but the request was interrupted. Please try asking your question again." 
-          },
-          ...prevHistory,
-        ]);
-      } else {
-        console.error("Error in AI request:", error);
-        setProcessingStatus("Error occurred");
-        setAnswerHistory((prevHistory) => [
-          { 
-            question: currentQuestion, 
-            answer: "I apologize, but there was an error processing your request. Please try again." 
-          },
-          ...prevHistory,
-        ]);
+      console.error("Error in AI request:", error);
+      setProcessingStatus("Error occurred");
+      
+      // Log the error
+      conversationLogger.logError(error, "AI request failed").catch(console.error);
+      
+      if (typeof addAnswerToHistory === 'function') {
+        addAnswerToHistory(
+          currentQuestion, 
+          "I apologize, but there was an error processing your request. Please try again."
+        );
       }
+      
       setQuestion("");
       setTimeout(() => {
         setProcessingStatus("");
@@ -204,9 +194,16 @@ export default function ChatBot({
   };
 
   const handleStop = () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
+    // Stop functionality would need to be implemented in the parent component
+    // For now, just reset the UI state
+    setShowTyping(false);
+    setProcessingStatus("Stopped by user");
+    setTimeout(() => {
+      setProcessingStatus("");
+      setProgress(0);
+      setProcessingTime(0);
+      setRouteInfo("");
+    }, 2000);
   };
 
   const enhancedHandleKeyDown = (e) => {
@@ -217,9 +214,6 @@ export default function ChatBot({
   };
 
   const enhancedHandleClearChat = async () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
     setProcessingStatus("");
     setProgress(0);
     setProcessingTime(0);
