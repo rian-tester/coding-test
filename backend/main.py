@@ -18,11 +18,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = FastAPI(
-    title="InterOpera API",
+    title="Fitra Portofolio API",
     description="AI-powered sales assistant with modular architecture and intelligent routing",
     version="2.0.0",
     contact={
-        "name": "InterOpera Support",
+        "name": "Fitra Portofolio Support",
         "url": "http://example.com/contact/",
         "email": "support@example.com",
     },
@@ -45,7 +45,7 @@ if os.path.exists("images"):
     app.mount("/images", StaticFiles(directory="images"), name="images")
 
 def initialize_server():
-    logger.log_sync("SERVER", "STARTUP_BEGIN", extra="Initializing InterOpera API Server v2.0")
+    logger.log_sync("SERVER", "STARTUP_BEGIN", extra="Initializing Fitra Portofolio API Server v2.0")
     
     python_version = f"{os.sys.version_info.major}.{os.sys.version_info.minor}.{os.sys.version_info.micro}"
     logger.log_sync("SERVER", "ENVIRONMENT", extra=f"Python {python_version}")
@@ -65,7 +65,7 @@ def initialize_server():
             with open("assistant.txt", "r") as f:
                 return f.read().strip()
         except FileNotFoundError:
-            return "You are a helpful AI assistant for InterOpera sales support."
+            return "You are a helpful AI assistant for Fitra Portofolio sales support."
     
     system_instruction = load_system_instruction()
     
@@ -74,7 +74,7 @@ def initialize_server():
     chat_service = ChatService(OPENAI_API_KEY, system_instruction)
     
     logger.log_sync("SERVER", "SERVICES_INITIALIZED", extra="All services ready")
-    logger.log_sync("SERVER", "STARTUP_COMPLETE", extra="InterOpera API Server v2.0 ready")
+    logger.log_sync("SERVER", "STARTUP_COMPLETE", extra="Fitra Portofolio API Server v2.0 ready")
     
     return ai_router, rag_service, chat_service, data_service
 
@@ -231,7 +231,7 @@ async def ai_endpoint(request: Request, question_request: QuestionRequest):
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    logger.log_sync("SERVER", "SHUTDOWN_BEGIN", extra="InterOpera API Server shutting down")
+    logger.log_sync("SERVER", "SHUTDOWN_BEGIN", extra="Fitra Portofolio API Server shutting down")
 
 if __name__ == "__main__":
     logger.log_sync("SERVER", "STARTUP_UVICORN", extra="Starting Uvicorn server on 0.0.0.0:8000")
