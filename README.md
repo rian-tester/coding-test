@@ -49,10 +49,10 @@ The initial frontend was a simple data display:
 - Minimal styling and basic responsiveness
 
 **Sales Dashboard V1:**
-![Sales Dashboard V1](https://drive.google.com/uc?export=view&id=1KYYUIK0lAWsuqsgq5uFRs5UOOuVzcVpd)
+![Sales Dashboard V1](https://ibb.co.com/wjfZLVR)
 
 **Chat Section V1:**
-![Chat Section V1](https://drive.google.com/uc?export=view&id=1y15DehmA8ICiVpTT5EF4SK-n2fodb2-G)
+![Chat Section V1](https://ibb.co.com/Ng8GVCSj)
 
 #### Phase 2: Modern UI Transformation
 Redesigned the entire user experience:
@@ -71,12 +71,12 @@ Current implementation showcases:
 - **Responsive Architecture**: Mobile-first design ensuring perfect functionality across all device sizes
 
 **Sales Dashboard V2:**
-![Sales Dashboard V2 - Main View](https://drive.google.com/uc?export=view&id=1B1sIJhjILfqkZOPuUJzXP4RNEXsX-fWh)
-![Sales Dashboard V2 - Alternative View](https://drive.google.com/uc?export=view&id=11EtkkU6XAfc3cSGW2HOm12HwqW5QX6m5)
+![Sales Dashboard V2 - Main View](https://ibb.co.com/WvStCRXp)
+![Sales Dashboard V2 - Alternative View](https://ibb.co.com/9mSMs4sD)
 
 **Chat Section V2:**
-![Chat Section V2 - Interface](https://drive.google.com/uc?export=view&id=1JnMCEkdkyTK2PCBKtCR1Fg4Qo9S48Ja4)
-![Chat Section V2 - Conversation Flow](https://drive.google.com/uc?export=view&id=1iTREZV5wu_J2yv_09L6wXvABgveRaOa3)
+![Chat Section V2 - Interface](https://ibb.co.com/wNVJmcqZ)
+![Chat Section V2 - Conversation Flow](https://ibb.co.com/DfkB2nQ8)
 
 ### Technical Implementation Details
 
