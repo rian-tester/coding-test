@@ -141,7 +141,7 @@ export default function Home() {
     <>
       <Head>
         <title>Fitra Portfolio</title>
-        <meta name="description" content="Chat with our agentic AI to discuss sales rep data or other general discussion" />
+        <meta name="description" content="Powered with OpenAI and advanced RAG System" />
       </Head>
       <Background />
 
@@ -182,8 +182,7 @@ export default function Home() {
             {/* AI Section */}
             {activeSection === "ai-section" && (
               <div className="ai-section-wrapper">
-                <h2 className="section-header">Ask a Question</h2>
-                <div style={{ height: "100%", minHeight: 0, display: "flex", flexDirection: "column" }}>
+                <div style={{ height: "100%", minHeight: 0, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
                   <ChatBot
                     question={question}
                     setQuestion={setQuestion}
