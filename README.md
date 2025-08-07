@@ -49,10 +49,10 @@ The initial frontend was a simple data display:
 - Minimal styling and basic responsiveness
 
 **Sales Dashboard V1:**
-![Sales Dashboard V1](https://ibb.co.com/wjfZLVR)
+![Sales Dashboard V1](./Readme/Fitra%20portfolio%20frontend%20V1.png)
 
 **Chat Section V1:**
-![Chat Section V1](https://ibb.co.com/Ng8GVCSj)
+![Chat Section V1](./Readme/Fitra%20portfolio%20part%202%20chat%20part%201.png)
 
 #### Phase 2: Modern UI Transformation
 Redesigned the entire user experience:
@@ -71,12 +71,12 @@ Current implementation showcases:
 - **Responsive Architecture**: Mobile-first design ensuring perfect functionality across all device sizes
 
 **Sales Dashboard V2:**
-![Sales Dashboard V2 - Main View](https://ibb.co.com/WvStCRXp)
-![Sales Dashboard V2 - Alternative View](https://ibb.co.com/9mSMs4sD)
+![Sales Dashboard V2 - Card View](./Readme/Fitra%20portfolio%20V1%20sales%20data.png)
+![Sales Dashboard V2 - Stats View](./Readme/Fitra%20portfolio%20V2%20sales%20part%201.png)
+![Sales Dashboard V2 - Detailed View](./Readme/fitra%20portfolio%20V2%20sales%20part%202.png)
 
 **Chat Section V2:**
-![Chat Section V2 - Interface](https://ibb.co.com/wNVJmcqZ)
-![Chat Section V2 - Conversation Flow](https://ibb.co.com/DfkB2nQ8)
+![Chat Section V2 - Interface](./Readme/Fitra%20portfolio%20V2%20chat%20part%202.png)
 
 ### Technical Implementation Details
 
