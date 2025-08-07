@@ -1,17 +1,20 @@
-# InterOpera Sales Dashboard
+
+# Fitra Portofolio
+
 
 ## Introduction
 
-Welcome to my submission for the InterOpera coding challenge!  
-I'm really having a great time building this application and I hope you enjoy exploring it as much as I enjoyed developing it.
+Welcome to my personal portfolio project! This application is designed to showcase my skills as a full-stack developer, with a focus on:
 
-As a game developer, I couldn’t resist adding a bit of my personal touch to the visual style. Since there were no strict instructions for the frontend design, I took the opportunity to reflect my own aesthetic preferences in the UI. I hope it doesn't bother you. I aimed to make the experience clean, engaging, and fun.
+- **Backend:** Python, FastAPI, Retrieval Augmented Generation (RAG), and OpenAI API extensions
+- **Frontend:** Node.js, Next.js, GPT-style bubble chat, data visualization, modern web design, and robust API handling
 
-What’s most important is that I poured genuine effort into every part of this project. Regardless of the outcome of the test, I hope you can feel the energy and dedication behind it, and I truly appreciate your time reviewing it.
+This project demonstrates my ability to build scalable, interactive, and visually appealing web applications. The backend leverages advanced AI and RAG techniques, while the frontend delivers a clean, engaging user experience inspired by modern chat and dashboard interfaces.
 
-This project features a modern, interactive sales dashboard that displays sales representative data with a clean, intuitive interface. I've implemented all the required functionality along with several bonus features to demonstrate my technical capabilities and creativity.
+In the future, I plan to extend this portfolio to include my skills in CI/CD, containerization, and deployment. Deployment options are still under consideration.
 
-I've focused on creating a visually appealing UI with smooth animations and responsive design, while ensuring proper data handling and API structure.
+---
+
 
 ---
 
