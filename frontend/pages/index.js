@@ -100,6 +100,7 @@ export default function Home() {
       <Head>
         <title>Fitra Portfolio</title>
         <meta name="description" content="Powered with OpenAI api and advanced RAG system"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <Background />
 

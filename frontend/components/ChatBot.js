@@ -248,7 +248,7 @@ export default function ChatBot({
   return (
     <div className={styles["chat-container"]}>
       <div className={styles["chat-header"]}>
-        <h2>InterOpera AI</h2>
+        <h2>Sales Dashboard Assistant</h2>
         <p>{processingStatus || "Ready when you are."}</p>
         {(processingTime > 0 || routeInfo) && (
           <div className={styles["status-info"]}>
