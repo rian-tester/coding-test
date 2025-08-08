@@ -1,0 +1,24 @@
+pipeline {
+    agent any
+
+    stages {
+        
+        stage ('Build Backend Docker') {
+            steps {
+                sh ''''
+                    cd backend
+                    docker build -t sales-dashboard-backend .
+                '''
+            }
+        }
+        stage ('Build Frontend Docker') {
+            steps {
+                sh '''
+                    cd frontend 
+                    docker build -t sales-dashboard-frontend .
+                '''
+            }
+        }
+
+    }
+}
