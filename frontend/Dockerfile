@@ -10,8 +10,8 @@ RUN rm -rf node_modules .next
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install dependencies using npm ci
-RUN npm ci
+# Install dependencies using npm install
+RUN npm ci --include=dev
 
 # Copy the application code
 COPY . .
