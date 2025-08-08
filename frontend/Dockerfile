@@ -7,11 +7,11 @@ WORKDIR /app
 # Clean any existing builds (defensive cleanup)
 RUN rm -rf node_modules .next
 
-# Copy package.json and package-lock.json
-COPY package*.json ./
+# Copy package.json only
+COPY package.json ./
 
-# Install dependencies using npm install
-RUN npm ci --include=dev
+# Install dependencies using npm install to handle untracked package-lock.json
+RUN npm install
 
 # Copy the application code
 COPY . .
@@ -19,7 +19,7 @@ COPY . .
 # Clean builds again before building (ensure fresh build)
 RUN rm -rf .next
 
-# Build the Next.js application
+# Install dependencies and buildnpm 
 RUN npm run build
 
 # Create a non-root user for security
