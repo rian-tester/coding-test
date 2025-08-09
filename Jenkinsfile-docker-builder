@@ -8,6 +8,11 @@ pipeline {
                 checkout scm
             }
         }
+        stage('Cleanup Old Images') {
+            steps {
+                sh 'docker image prune -f'
+            }
+        }
         stage ('Build Backend Docker') {
             steps {
                 sh '''
