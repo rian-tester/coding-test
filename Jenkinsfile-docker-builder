@@ -12,7 +12,7 @@ pipeline {
             steps {
                 sh '''
                     cd backend
-                    docker build -t sales-dashboard-backend .
+                    docker build -t sales-dashboard-backend:latest .
                 '''
             }
         }
@@ -20,7 +20,7 @@ pipeline {
             steps {
                 sh '''
                     cd frontend 
-                    docker build -t sales-dashboard-frontend .
+                    docker build -t sales-dashboard-frontend:latest .
                 '''
             }
         }
