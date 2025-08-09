@@ -4,14 +4,38 @@ pipeline {
         OPENAI_API_KEY = credentials('openai-api-key')
     }
     stages {
-        stage('Check Backend Image') {
-            steps {
-                sh 'docker images'
+        stage('Local Test - Run Tests in Docker') {
+            agent {
+                docker {
+                    image 'sales-dashboard-backend:latest'
+                    reuseNode true
+                }
             }
-        }
-        stage('Run Backend Container') {
             steps {
                 sh '''
+                    echo "=== Running all tests ==="
+                    pytest -v --maxfail=1 --junitxml=junit-report.xml /app/tests/
+                '''
+            }
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: 'junit-report.xml'
+                    archiveArtifacts artifacts: 'junit-report.xml', allowEmptyArchive: true
+                }
+            }
+        }
+        stage('Runtime - Check Image Available') {
+            steps {
+                sh '''
+                    echo "=== Checking available images ==="
+                    docker images | grep sales-dashboard-backend
+                '''
+            }
+        }
+        stage('Runtime - Start Backend Container') {
+            steps {
+                sh '''
+                    echo "=== Starting backend container ==="
                     docker rm -f backend || true
                     docker run -d --name backend -p 8000:8000 \
                         -e ENV=production \
@@ -20,60 +44,39 @@ pipeline {
                 '''
             }
         }
-        stage('Wait for Backend Ready') {
+        stage('Runtime - Wait and Test Server') {
             steps {
                 sh '''
-                    echo "Waiting for Uvicorn startup log..."
-                    for i in $(seq 1 60); do
-                        if docker logs backend 2>&1 | grep -q "Uvicorn running on http://0.0.0.0:8000"; then
-                            echo "Uvicorn started"
-                            break
-                        fi
-                        sleep 2
-                    done
-
-                    echo "Checking if port 8000 is open..."
-                    for i in $(seq 1 30); do
-                        if nc -z localhost 8000; then
-                            echo "Backend port is open"
+                    echo "=== Waiting for server to be ready ==="
+                    sleep 10
+                    
+                    echo "=== Testing if server is active ==="
+                    for i in $(seq 1 20); do
+                        echo "Attempt $i: Testing server..."
+                        if curl -f -s http://localhost:8000/api/sales-reps >/dev/null 2>&1; then
+                            echo "✅ Server is active and responding!"
+                            curl -s http://localhost:8000/api/sales-reps | head -5
                             exit 0
                         fi
-                        sleep 2
+                        sleep 3
                     done
-                    echo "Backend port not open" >&2
-                    docker logs backend || true
+                    
+                    echo "❌ Server not responding after 60 seconds"
+                    echo "=== Container logs ==="
+                    docker logs backend
                     exit 1
                 '''
-            }
-        }
-        stage('Check Files Inside Container') {
-            steps {
-                sh '''
-                    echo "=== Files in container /app ==="
-                    docker exec backend ls -la /app/
-                    echo "=== Files in container /app/tests ==="
-                    docker exec backend ls -la /app/tests/
-                '''
-            }
-        }
-        stage('Run Tests in Container') {
-            steps {
-                sh '''
-                    docker exec backend pytest -v --maxfail=1 --junitxml=/app/junit-report.xml
-                    docker cp backend:/app/junit-report.xml backend/junit-report.xml
-                '''
-            }
-            post {
-                always {
-                    junit allowEmptyResults: true, testResults: 'backend/junit-report.xml'
-                }
             }
         }
     }
     post {
         always {
-            sh 'docker logs backend || true'
-            sh 'docker rm -f backend || true'
+            sh '''
+                echo "=== Final container logs ==="
+                docker logs backend || true
+                echo "=== Cleaning up ==="
+                docker rm -f backend || true
+            '''
         }
     }
 }
