@@ -12,6 +12,7 @@ pipeline {
             steps {
                 sh '''
                     cd backend
+                    echo "Build: ${BUILD_NUMBER}" > build-info.txt
                     docker build -t sales-dashboard-backend:latest .
                 '''
             }
@@ -19,7 +20,8 @@ pipeline {
         stage ('Build Frontend Docker') {
             steps {
                 sh '''
-                    cd frontend 
+                    cd frontend
+                    echo "Build: ${BUILD_NUMBER}" > build-info.txt
                     docker build -t sales-dashboard-frontend:latest .
                 '''
             }
