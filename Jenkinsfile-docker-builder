@@ -5,6 +5,7 @@ pipeline {
         stage('Clean Workspace') {
             steps {
                 deleteDir()
+                checkout scm
             }
         }
         stage ('Build Backend Docker') {
