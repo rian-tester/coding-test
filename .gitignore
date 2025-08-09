@@ -11,7 +11,6 @@ backend/error.log
 backend/api-log.txt
 backend/main_v2.py
 backend/main_original.py
-backend/test_system.py
 backend/models/__pycache__/
 backend/services/__pycache__/
 backend/utils/__pycache__/
