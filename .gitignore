@@ -19,5 +19,8 @@ backend/middleware/__pycache__/
 backend/tests/__pycache__/
 backend/test/__pycache__/
 
+# Jenkins
+Jenkins/
+
 # Project References
 References/

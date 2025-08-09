@@ -4,16 +4,22 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json (if available)
-COPY package*.json ./
+# Clean any existing builds (defensive cleanup)
+RUN rm -rf node_modules .next
 
-# Install dependencies
-RUN npm ci --only=production
+# Copy package.json only
+COPY package.json ./
+
+# Install dependencies using npm install to handle untracked package-lock.json
+RUN npm install
 
 # Copy the application code
 COPY . .
 
-# Build the Next.js application
+# Clean builds again before building (ensure fresh build)
+RUN rm -rf .next
+
+# Install dependencies and buildnpm 
 RUN npm run build
 
 # Create a non-root user for security
@@ -27,5 +33,5 @@ USER nextjs
 # Expose the port the app runs on
 EXPOSE 3000
 
-# Command to run the application
+# Command to run the production build
 CMD ["npm", "start"]

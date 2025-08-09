@@ -3,10 +3,11 @@
 services:
   # Backend service (Python FastAPI)
   backend:
+    image: sales-dashboard-backend
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: interopera-backend
+    container_name: sales-dashboard-backend
     ports:
       - "8000:8000"
     environment:
@@ -21,14 +22,15 @@ services:
       timeout: 10s
       retries: 3
     networks:
-      - interopera-network
+      - sales-dashboard-network
 
   # Frontend service (Next.js)
   frontend:
+    image: sales-dashboard-frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: interopera-frontend
+    container_name: sales-dashboard-frontend
     ports:
       - "3000:3000"
     environment:
@@ -42,11 +44,11 @@ services:
     depends_on:
       - backend
     networks:
-      - interopera-network
+      - sales-dashboard-network
 
 # Define network
 networks:
-  interopera-network:
+  sales-dashboard-network:
     driver: bridge
 
 # Define volumes for data persistence
