@@ -15,12 +15,17 @@ pipeline {
                 sh '''
                     echo "=== Running all tests ==="
                     pytest -v --maxfail=1 --junitxml=junit-report.xml /app/tests/
+                    
+                    echo "=== Copying log files from container ==="
+                    cp /app/*.log . || echo "No log files found in /app/"
+                    cp /app/*.txt . || echo "No txt files found in /app/"
+                    ls -la
                 '''
             }
             post {
                 always {
                     junit allowEmptyResults: true, testResults: 'junit-report.xml'
-                    archiveArtifacts artifacts: 'junit-report.xml', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'junit-report.xml, *.log, *.txt', allowEmptyArchive: true
                 }
             }
         }
@@ -41,6 +46,10 @@ pipeline {
                         -e ENV=production \
                         -e OPENAI_API_KEY=$OPENAI_API_KEY \
                         sales-dashboard-backend:latest
+                    
+                    echo "=== Container started, waiting a moment ==="
+                    sleep 5
+                    docker ps | grep backend
                 '''
             }
         }
@@ -72,11 +81,16 @@ pipeline {
     post {
         always {
             sh '''
+                echo "=== Copying runtime logs ==="
+                docker cp backend:/app/api-log.txt ./runtime-api-log.txt || echo "No api-log.txt found"
+                docker cp backend:/app/error.log ./runtime-error.log || echo "No error.log found"
+                
                 echo "=== Final container logs ==="
                 docker logs backend || true
                 echo "=== Cleaning up ==="
                 docker rm -f backend || true
             '''
+            archiveArtifacts artifacts: 'runtime-*.log, runtime-*.txt', allowEmptyArchive: true
         }
     }
 }

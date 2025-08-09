@@ -3,6 +3,7 @@ uvicorn
 python-dotenv
 openai
 pytest
+pytest-asyncio
 httpx
 langchain
 langchain-openai
