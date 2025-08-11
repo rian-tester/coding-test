@@ -33,11 +33,23 @@ pipeline {
         }
         stage ('Build Frontend Docker') {
             steps {
-                sh '''
-                    cd frontend
-                    echo "Build: ${BUILD_NUMBER}" > build-info.txt
-                    docker build -t sales-dashboard-frontend:latest .
-                '''
+                script {
+                    echo 'Start checking step before builiding'
+                    // Verify /host-frontend
+                    def mountStatus = sh(script: 'test -d /host-frontend', returnStatus: true)
+                    if (mountStatus != 0) {
+                        echo 'Mount check failed: /host-frontend not found.'
+                        error 'Please setup your sales-dashboard Jenkins and mount your local frontend folder to /host-frontend'
+                    }
+                    
+                    echo 'Check /host-frontend'
+                    sh 'ls -la /host-frontend || true'
+                }
+            }
+            
+            steps {
+                echo 'Build frontend image with docker ignore'
+                sh 'docker build -t sales-dashboard-frontend:latest /host-frontend'
             }
         }
 
