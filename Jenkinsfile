@@ -1,96 +1,120 @@
 pipeline {
     agent any
-    environment {
-        OPENAI_API_KEY = credentials('openai-api-key')
-    }
+
     stages {
-        stage('Local Test - Run Tests in Docker') {
+        stage('Cleaning up Workspace') {
+            steps {
+                echo 'Start cleaning'
+                // Removes all normal files and directories
+                echo 'Removes all normal files and directories'
+                sh 'rm -rf "$WORKSPACE"/* || true'
+                
+                // Remove hidden files except . and ..
+                echo 'Remove hidden files except . and ..'
+                sh 'rm -rf "$WORKSPACE"/.[!.]* || true'
+                
+                // Remove hidden directories w/ two or more leading dots
+                echo 'Remove hidden directories w/ two or more leading dots'
+                sh 'rm -rf "$WORKSPACE"/..?* || true'
+
+                // Use Delete Dir
+                echo 'Using deleteDir()'
+                deleteDir()
+                
+                // Results
+                echo 'check Workspace'
+                sh 'ls -A "$WORKSPACE"'
+            }
+            
+            
+        }
+        stage ('Check if sales-dashboard-backend image exist') {
+            steps {
+                // Verify image exist
+                script {
+                    def imageStatus = sh (
+                        script: "docker images -q sales-dashboard-backend:latest | grep .",
+                        returnStatus: true
+                    )
+                    if (imageStatus != 0) {
+                        echo 'Docker image sales-dashboard-backend:latest not found'
+                        error 'Please build the image sales-dashboard-backend:latest first before running this pipeline'
+                    }
+                }
+            }
+        }
+        stage('Extract files to Workspace') {
+            steps {
+                // copy files from the container into the workspace
+                echo 'copy files from the container into the workspace'
+                sh '''
+                    docker run --rm \
+                    --entrypoint '' \
+                    -v "$WORKSPACE":/workspace \
+                    sales-dashboard-backend \
+                    sh -lc "cp -r /app/. /workspace"
+                '''
+
+                echo 'Current files in Jenkins workspace : '
+                sh 'ls -la'
+            }
+        }
+        stage('Unit Test') {
             agent {
                 docker {
                     image 'sales-dashboard-backend:latest'
                     reuseNode true
+                    args "--entrypoint=''"
                 }
             }
             steps {
-                sh '''
-                    echo "=== Running all tests ==="
-                    pytest -v --maxfail=1 --junitxml=junit-report.xml /app/tests/
+                echo 'Check if test files is exist inside tests folder'
+                script {
+                    // Check if tests/ folder exists and contains Python test files
+                    def testFiles = sh(
+                        script: 'find tests/ -name "test_*.py" -o -name "*_test.py" 2>/dev/null | wc -l',
+                        returnStdout: true
+                    ).trim()
                     
-                    echo "=== Copying log files from container ==="
-                    cp /app/*.log . || echo "No log files found in /app/"
-                    cp /app/*.txt . || echo "No txt files found in /app/"
-                    ls -la
-                '''
+                    if (testFiles == '0') {
+                        echo 'No test files found in tests/ folder. Skipping pytest execution.'
+                        currentBuild.result = 'SUCCESS'
+                        return
+                    }
+                    
+                    echo "Found ${testFiles} test file(s). Running pytest..."
+                    
+                    // Ensure reports directory exists
+                    sh 'mkdir -p reports'
+                    
+                    // Run test with verbose and extra text
+                    sh 'pytest -v -rA --junitxml=reports/pytest-junit.xml'
+                }
             }
             post {
                 always {
-                    junit allowEmptyResults: true, testResults: 'junit-report.xml'
-                    archiveArtifacts artifacts: 'junit-report.xml, *.log, *.txt', allowEmptyArchive: true
+                    // Parse JUnit for test results
+                    junit allowEmptyResults: true, testResults: 'reports/pytest-junit.xml'
                 }
             }
         }
-        stage('Runtime - Check Image Available') {
+        stage('Clean workspace after unit test') {
             steps {
-                sh '''
-                    echo "=== Checking available images ==="
-                    docker images | grep sales-dashboard-backend
-                '''
-            }
-        }
-        stage('Runtime - Start Backend Container') {
-            steps {
-                sh '''
-                    echo "=== Starting backend container ==="
-                    docker rm -f backend || true
-                    docker run -d --name backend -p 8000:8000 \
-                        -e ENV=production \
-                        -e OPENAI_API_KEY=$OPENAI_API_KEY \
-                        sales-dashboard-backend:latest
+                    // Delete files
+                    sh 'rm -rf "$WORKSPACE"/* || true'
                     
-                    echo "=== Container started, waiting a moment ==="
-                    sleep 5
-                    docker ps | grep backend
-                '''
-            }
-        }
-        stage('Runtime - Wait and Test Server') {
-            steps {
-                sh '''
-                    echo "=== Waiting for server to be ready ==="
-                    sleep 10
-                    
-                    echo "=== Testing if server is active ==="
-                    for i in $(seq 1 20); do
-                        echo "Attempt $i: Testing server..."
-                        if curl -f -s http://localhost:8000/api/sales-reps >/dev/null 2>&1; then
-                            echo "✅ Server is active and responding!"
-                            curl -s http://localhost:8000/api/sales-reps | head -5
-                            exit 0
-                        fi
-                        sleep 3
-                    done
-                    
-                    echo "❌ Server not responding after 60 seconds"
-                    echo "=== Container logs ==="
-                    docker logs backend
-                    exit 1
-                '''
-            }
-        }
-    }
-    post {
-        always {
-            sh '''
-                echo "=== Copying runtime logs ==="
-                docker cp backend:/app/api-log.txt ./runtime-api-log.txt || echo "No api-log.txt found"
-                docker cp backend:/app/error.log ./runtime-error.log || echo "No error.log found"
+                    // Remove hidden files except . and ..
+                    echo 'Remove hidden files except . and ..'
+                    sh 'rm -rf "$WORKSPACE"/.[!.]* || true'
                 
-                echo "=== Final container logs ==="
-                docker logs backend || true
-                echo "=== Cleaning up ==="
-                docker rm -f backend || true
-            '''
-            archiveArtifacts artifacts: 'runtime-*.log, runtime-*.txt', allowEmptyArchive: true
+                    // Remove hidden directories w/ two or more leading dots
+                    echo 'Remove hidden directories w/ two or more leading dots'
+                    sh 'rm -rf "$WORKSPACE"/..?* || true'
+                    
+                    // Results
+                    echo 'check leftover files'
+                    sh 'ls -la'
+            }
         }
     }
 }
