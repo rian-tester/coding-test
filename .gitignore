@@ -17,6 +17,7 @@ backend/utils/__pycache__/
 backend/middleware/__pycache__/
 backend/tests/__pycache__/
 backend/test/__pycache__/
+.pytest_cache/
 
 # Jenkins
 Jenkins/

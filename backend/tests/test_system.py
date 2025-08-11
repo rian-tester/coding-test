@@ -16,7 +16,7 @@ async def test_new_system():
     sales_data = data_service.get_sales_data()
     assert "salesReps" in sales_data
 
-    router = AIRouter(openai_key)
+    router = AIRouter(openai_key, sales_data)
 
     test_questions = [
         "hello",

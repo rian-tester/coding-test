@@ -12,3 +12,5 @@ sentence-transformers
 faiss-cpu
 numpy
 pydantic
+pytest
+pytest-asyncio

@@ -2,24 +2,33 @@ pipeline {
     agent any
 
     stages {
-        stage('Clean Workspace') {
-            steps {
-                deleteDir()
-                checkout scm
-            }
-        }
-        stage('Cleanup Old Images') {
-            steps {
-                sh 'docker image prune -f'
-            }
-        }
         stage ('Build Backend Docker') {
             steps {
-                sh '''
-                    cd backend
-                    echo "Build: ${BUILD_NUMBER}" > build-info.txt
-                    docker build -t sales-dashboard-backend:latest .
-                '''
+                script {
+                    echo 'Start checking step before builiding'
+                    // Verify /host-backend
+                    def mountStatus = sh(script: 'test -d /host-backend', returnStatus: true)
+                    if (mountStatus != 0) {
+                        echo 'Mount check failed: /host-backend not found.'
+                        error 'Please setup your sales-dashboard Jenkins and mount your local backend folder to /host-backend'
+                    }
+                    
+                    echo 'Check /host-backend'
+                    sh 'ls -la /host-backend || true'
+                    
+                    // Verify .env exists
+                    def envStatus = sh (script: 'test -f /host-backend/.env', returnStatus: true)
+                    if (envStatus != 0) {
+                        echo 'Missing .env in /host-backend'
+                        error 'Please provide .env file with OpenAI api key'
+                    } else {
+                        echo '.env found'
+                    }
+                }
+            }
+            steps {
+                echo 'Build backend image with docker ignore'
+                sh 'docker build -t sales-dashboard-backend:latest /host-backend'
             }
         }
         stage ('Build Frontend Docker') {
@@ -29,6 +38,12 @@ pipeline {
                     echo "Build: ${BUILD_NUMBER}" > build-info.txt
                     docker build -t sales-dashboard-frontend:latest .
                 '''
+            }
+        }
+
+        stage ('Build Results') {
+            steps {
+                sh 'docker images'
             }
         }
     }
