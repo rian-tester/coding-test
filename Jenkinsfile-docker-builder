@@ -25,9 +25,10 @@ pipeline {
                         echo '.env found'
                     }
                 }
-
                 echo 'Build backend image with docker ignore'
                 sh 'docker build -t sales-dashboard-backend:latest /host-backend'
+
+
             }
         }
         stage ('Build Frontend Docker') {
@@ -44,10 +45,9 @@ pipeline {
                     echo 'Check /host-frontend'
                     sh 'ls -la /host-frontend || true'
                 }
-            }
-            echo 'Build frontend image with docker ignore'
-            sh 'docker build -t sales-dashboard-frontend:latest /host-frontend'
-
+                echo 'Build frontend image with docker ignore'
+                sh 'docker build -t sales-dashboard-frontend:latest /host-frontend'
+            }            
         }
 
         stage ('Build Results') {
